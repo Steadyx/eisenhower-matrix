@@ -12,7 +12,7 @@ export const register = async (_req: Request, res: Response) => {
     res.status(201).json({
       message: 'User registered successfully',
       username: user.username,
-      uniqueID // Consider sending this via a secure channel
+      uniqueID
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -41,7 +41,7 @@ export const login = async (req: Request, res: Response) => {
     const token = authService.generateJWT(user);
 
     res.status(200).json({ token });
-    return; // You can also add return here
+    return;
   } catch (error) {
     if (error instanceof Error) {
       res.status(401).json({ error: error.message });
