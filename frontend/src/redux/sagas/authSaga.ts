@@ -19,10 +19,10 @@ interface AuthResponse {
 }
 
 const registerApi = (uniqueID: string): Promise<AxiosResponse<AuthResponse>> =>
-  axios.post<AuthResponse>(`${API_URL}/tasks/register`, { uniqueID });
+  axios.post<AuthResponse>(`${API_URL}/auth/register`, { uniqueID });
 
 const loginApi = (uniqueID: string): Promise<AxiosResponse<AuthResponse>> =>
-  axios.post<AuthResponse>(`${API_URL}/tasks/login`, { uniqueID });
+  axios.post<AuthResponse>(`${API_URL}/auth/login`, { uniqueID });
 
 function* handleRegister(action: PayloadAction<string>): SagaIterator {
   try {
@@ -30,9 +30,9 @@ function* handleRegister(action: PayloadAction<string>): SagaIterator {
     const response: AxiosResponse<AuthResponse> = yield call(registerApi, uniqueID);
     const { token, username } = response.data;
 
-    /* if (!token || !username) {
+    if (!token || !username) {
       throw new Error("Invalid response from server");
-    } */
+    }
 
     localStorage.setItem("token", token);
     localStorage.setItem("username", username);
@@ -42,13 +42,10 @@ function* handleRegister(action: PayloadAction<string>): SagaIterator {
     let errorMessage: string;
 
     if (axios.isAxiosError(error)) {
-
       errorMessage = error.response?.data?.error || "Registration failed";
     } else if (error instanceof Error) {
-
       errorMessage = error.message;
     } else {
-
       errorMessage = "Registration failed";
     }
 
@@ -59,12 +56,12 @@ function* handleRegister(action: PayloadAction<string>): SagaIterator {
 function* handleLogin(action: PayloadAction<string>): SagaIterator {
   try {
     const uniqueID: string = action.payload;
-    const response: AxiosResponse<AuthResponse> = yield call(loginApi, uniqueID);
+    const response: AxiosResponse<{ token: string; username: string }> = yield call(loginApi, uniqueID);
     const { token, username } = response.data;
 
-    /* if (!token || !username) {
+    if (!token || !username) {
       throw new Error("Invalid response from server");
-    } */
+    }
 
     localStorage.setItem("token", token);
     localStorage.setItem("username", username);
