@@ -5,6 +5,8 @@ import { Task } from "@/types/task";
 
 interface TaskItemProps {
   task: Task;
+  toggleTask: (id: string, currentStatus: boolean) => void;
+  deleteTask: (id: string, currentStatus: boolean) => void;
 }
 
 const TaskItem: FC<TaskItemProps> = ({ task }) => {

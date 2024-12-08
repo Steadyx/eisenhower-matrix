@@ -1,3 +1,4 @@
+// src/redux/sagas/taskSagas.ts
 import { takeLatest, call, put, select, all, fork } from "redux-saga/effects";
 import axios, { AxiosResponse } from "axios";
 import {
@@ -7,6 +8,12 @@ import {
   createTaskRequest,
   createTaskSuccess,
   createTaskFailure,
+  updateTaskRequest,
+  updateTaskSuccess,
+  updateTaskFailure,
+  deleteTaskRequest,
+  deleteTaskSuccess,
+  deleteTaskFailure,
 } from "../slices/taskSlice";
 import { RootState } from "../store";
 import { SagaIterator } from "redux-saga";
@@ -31,6 +38,20 @@ const createTaskApi = (
   token: string
 ): Promise<AxiosResponse<TaskResponse>> =>
   axios.post<TaskResponse>(`${API_URL}/tasks`, task, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+const updateTaskApi = (
+  id: string,
+  updates: Partial<{ title: string; completed: boolean; quadrantId: string }>,
+  token: string
+): Promise<AxiosResponse<TaskResponse>> =>
+  axios.put<TaskResponse>(`${API_URL}/tasks/${id}`, updates, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+const deleteTaskApi = (id: string, token: string): Promise<AxiosResponse<void>> =>
+  axios.delete<void>(`${API_URL}/tasks/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -85,6 +106,58 @@ function* handleCreateTask(action: PayloadAction<{ title: string; quadrantId: st
   }
 }
 
+function* handleUpdateTask(action: PayloadAction<{ id: string; updates: Partial<TaskResponse> }>): SagaIterator {
+  try {
+    const { id, updates } = action.payload;
+    const token: string | null = yield select((state: RootState) => state.auth.token);
+
+    if (!token) {
+      throw new Error("Authentication token is missing.");
+    }
+
+    const response: AxiosResponse<TaskResponse> = yield call(updateTaskApi, id, updates, token);
+    yield put(updateTaskSuccess(response.data));
+  } catch (error: unknown) {
+    let errorMessage: string;
+
+    if (axios.isAxiosError(error)) {
+      errorMessage = error.response?.data?.error || "Failed to update task.";
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = "Failed to update task.";
+    }
+
+    yield put(updateTaskFailure(errorMessage));
+  }
+}
+
+function* handleDeleteTask(action: PayloadAction<string>): SagaIterator {
+  try {
+    const id = action.payload;
+    const token: string | null = yield select((state: RootState) => state.auth.token);
+
+    if (!token) {
+      throw new Error("Authentication token is missing.");
+    }
+
+    yield call(deleteTaskApi, id, token);
+    yield put(deleteTaskSuccess(id));
+  } catch (error: unknown) {
+    let errorMessage: string;
+
+    if (axios.isAxiosError(error)) {
+      errorMessage = error.response?.data?.error || "Failed to delete task.";
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = "Failed to delete task.";
+    }
+
+    yield put(deleteTaskFailure(errorMessage));
+  }
+}
+
 function* watchFetchTasks(): SagaIterator {
   yield takeLatest(fetchTasksRequest.type, handleFetchTasks);
 }
@@ -93,6 +166,19 @@ function* watchCreateTask(): SagaIterator {
   yield takeLatest(createTaskRequest.type, handleCreateTask);
 }
 
+function* watchUpdateTask(): SagaIterator {
+  yield takeLatest(updateTaskRequest.type, handleUpdateTask);
+}
+
+function* watchDeleteTask(): SagaIterator {
+  yield takeLatest(deleteTaskRequest.type, handleDeleteTask);
+}
+
 export default function* taskSagas(): SagaIterator {
-  yield all([fork(watchFetchTasks), fork(watchCreateTask)]);
+  yield all([
+    fork(watchFetchTasks),
+    fork(watchCreateTask),
+    fork(watchUpdateTask),
+    fork(watchDeleteTask),
+  ]);
 }

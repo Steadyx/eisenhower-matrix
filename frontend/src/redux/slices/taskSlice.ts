@@ -11,12 +11,14 @@ interface TaskState {
   tasks: Task[];
   loading: boolean;
   error: string | null;
+  searchQuery: string;
 }
 
 const initialState: TaskState = {
   tasks: [],
   loading: false,
   error: null,
+  searchQuery: "",
 };
 
 const taskSlice = createSlice({
@@ -35,7 +37,7 @@ const taskSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
-    createTaskRequest(state) {
+    createTaskRequest(state, _action: PayloadAction<{ title: string; quadrantId: string }>) {
       state.loading = true;
       state.error = null;
     },
@@ -47,6 +49,45 @@ const taskSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+    updateTaskRequest(state, _action: PayloadAction<{ id: string; updates: Partial<Task> }>) {
+      state.loading = true;
+      state.error = null;
+    },
+    updateTaskSuccess(state, action: PayloadAction<Task>) {
+      state.loading = false;
+      const index = state.tasks.findIndex((task) => task.id === action.payload.id);
+      if (index !== -1) {
+        state.tasks[index] = action.payload;
+      }
+    },
+    updateTaskFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    deleteTaskRequest(state, _action: PayloadAction<string>) {
+      state.loading = true;
+      state.error = null;
+    },
+    deleteTaskSuccess(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.tasks = state.tasks.filter((task) => task.id !== action.payload);
+    },
+    deleteTaskFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    clearAllTasks(state) {
+      state.tasks = [];
+    },
+    setSearchQuery(state, action: PayloadAction<string>) {
+      state.searchQuery = action.payload;
+    },
+    toggleTask(state, action: PayloadAction<string>) {
+      const task = state.tasks.find((task) => task.id === action.payload);
+      if (task) {
+        task.completed = !task.completed;
+      }
+    }
   },
 });
 
@@ -57,6 +98,15 @@ export const {
   createTaskRequest,
   createTaskSuccess,
   createTaskFailure,
+  updateTaskRequest,
+  updateTaskSuccess,
+  updateTaskFailure,
+  deleteTaskRequest,
+  deleteTaskSuccess,
+  deleteTaskFailure,
+  clearAllTasks,
+  setSearchQuery,
+  toggleTask
 } = taskSlice.actions;
 
 export default taskSlice.reducer;

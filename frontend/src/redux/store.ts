@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { useDispatch } from "react-redux";
 import createSagaMiddleware from "redux-saga";
 import taskReducer from "./slices/taskSlice";
 import authReducer from "./slices/authSlice";
@@ -19,3 +20,6 @@ sagaMiddleware.run(rootSaga);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+

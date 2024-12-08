@@ -19,10 +19,10 @@ interface AuthResponse {
 }
 
 const registerApi = (uniqueID: string): Promise<AxiosResponse<AuthResponse>> =>
-  axios.post<AuthResponse>(`${API_URL}/register`, { uniqueID });
+  axios.post<AuthResponse>(`${API_URL}/tasks/register`, { uniqueID });
 
 const loginApi = (uniqueID: string): Promise<AxiosResponse<AuthResponse>> =>
-  axios.post<AuthResponse>(`${API_URL}/login`, { uniqueID });
+  axios.post<AuthResponse>(`${API_URL}/tasks/login`, { uniqueID });
 
 function* handleRegister(action: PayloadAction<string>): SagaIterator {
   try {
@@ -30,9 +30,9 @@ function* handleRegister(action: PayloadAction<string>): SagaIterator {
     const response: AxiosResponse<AuthResponse> = yield call(registerApi, uniqueID);
     const { token, username } = response.data;
 
-    if (!token || !username) {
+    /* if (!token || !username) {
       throw new Error("Invalid response from server");
-    }
+    } */
 
     localStorage.setItem("token", token);
     localStorage.setItem("username", username);
@@ -62,9 +62,9 @@ function* handleLogin(action: PayloadAction<string>): SagaIterator {
     const response: AxiosResponse<AuthResponse> = yield call(loginApi, uniqueID);
     const { token, username } = response.data;
 
-    if (!token || !username) {
+    /* if (!token || !username) {
       throw new Error("Invalid response from server");
-    }
+    } */
 
     localStorage.setItem("token", token);
     localStorage.setItem("username", username);

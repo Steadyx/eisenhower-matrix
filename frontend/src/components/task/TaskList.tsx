@@ -1,10 +1,11 @@
 import { FC } from "react";
 import TaskItem from "./TaskItem";
+import { Task } from "@/types/task"
 
 interface TaskListProps {
   tasks: Task[];
-  toggleTask: (id: string) => void;
-  deleteTask: (id: string) => void;
+  toggleTask: (id: string, currentStatus: boolean) => void;
+  deleteTask: (id: string, currentStatus: boolean) => void;
 }
 
 const TaskList: FC<TaskListProps> = ({ tasks, toggleTask, deleteTask }) => (
