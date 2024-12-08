@@ -1,17 +1,23 @@
-import { Request, Response } from 'express';
+import { RequestHandler } from 'express';
 import * as authService from '@services/authService';
 
-export const register = async (req: Request, res: Response) => {
+interface RegisterBody {
+  uniqueID: string;
+}
+
+export const register: RequestHandler<{}, any, RegisterBody> = async (req, res, _next) => {
   try {
     const { uniqueID } = req.body;
 
     if (!uniqueID) {
-      return res.status(400).json({ error: 'Unique ID is required' });
+      res.status(400).json({ error: 'Unique ID is required' });
+      return;
     }
 
     const existingUser = await authService.findUserByUniqueID(uniqueID);
     if (existingUser) {
-      return res.status(409).json({ error: 'Unique ID already in use' });
+      res.status(409).json({ error: 'Unique ID already in use' });
+      return;
     }
 
     const username = authService.generateUsername(uniqueID);
@@ -34,18 +40,20 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login: RequestHandler<{}, any, RegisterBody> = async (req, res, _next) => {
   try {
     const { uniqueID } = req.body;
 
     if (!uniqueID) {
-      return res.status(400).json({ error: 'Unique ID is required' });
+      res.status(400).json({ error: 'Unique ID is required' });
+      return;
     }
 
     const user = await authService.authenticate(uniqueID);
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid Unique ID' });
+      res.status(401).json({ error: 'Invalid Unique ID' });
+      return;
     }
 
     const token = authService.generateJWT(user);

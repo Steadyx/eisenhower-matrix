@@ -5,6 +5,7 @@ export interface IUser extends Document {
   username: string;
   password: string;
   hashedID: string;
+  uniqueID: string;
   comparePassword: (password: string) => Promise<boolean>;
 }
 
@@ -22,6 +23,11 @@ const UserSchema: Schema = new Schema<IUser>(
     },
     password: {
       type: String,
+    },
+    uniqueID: {
+      type: String,
+      required: [true, 'Unique ID is required'],
+      unique: true,
     },
   },
   {

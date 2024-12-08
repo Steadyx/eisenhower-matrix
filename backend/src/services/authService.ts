@@ -60,7 +60,7 @@ export const authenticate = async (uniqueID: string): Promise<IUser | null> => {
  */
 export const generateJWT = (user: IUser): string => {
   const payload = { id: user._id, username: user.username };
-  const secret = process.env.JWT_SECRET || 'your_jwt_secret';
+  const secret = process.env.JWT_SECRET || 'default_secret';
   const options = { expiresIn: '1h' };
   return jwt.sign(payload, secret, options);
 };
