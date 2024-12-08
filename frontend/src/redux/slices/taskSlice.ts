@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface Task {
-  id: string;
+  _id: string;
   title: string;
   completed: boolean;
   quadrantId: string;
@@ -12,6 +12,7 @@ interface TaskState {
   loading: boolean;
   error: string | null;
   searchQuery: string;
+  activeTasks: string[];
 }
 
 const initialState: TaskState = {
@@ -19,6 +20,7 @@ const initialState: TaskState = {
   loading: false,
   error: null,
   searchQuery: "",
+  activeTasks: [],
 };
 
 const taskSlice = createSlice({
@@ -55,7 +57,7 @@ const taskSlice = createSlice({
     },
     updateTaskSuccess(state, action: PayloadAction<Task>) {
       state.loading = false;
-      const index = state.tasks.findIndex((task) => task.id === action.payload.id);
+      const index = state.tasks.findIndex((task) => task._id === action.payload._id);
       if (index !== -1) {
         state.tasks[index] = action.payload;
       }
@@ -70,7 +72,8 @@ const taskSlice = createSlice({
     },
     deleteTaskSuccess(state, action: PayloadAction<string>) {
       state.loading = false;
-      state.tasks = state.tasks.filter((task) => task.id !== action.payload);
+      state.tasks = state.tasks.filter((task) => task._id !== action.payload);
+      state.activeTasks = state.activeTasks.filter((id) => id !== action.payload);
     },
     deleteTaskFailure(state, action: PayloadAction<string>) {
       state.loading = false;
@@ -78,16 +81,43 @@ const taskSlice = createSlice({
     },
     clearAllTasks(state) {
       state.tasks = [];
+      state.activeTasks = [];
     },
     setSearchQuery(state, action: PayloadAction<string>) {
       state.searchQuery = action.payload;
     },
     toggleTask(state, action: PayloadAction<string>) {
-      const task = state.tasks.find((task) => task.id === action.payload);
+      const task = state.tasks.find((task) => task._id === action.payload);
       if (task) {
         task.completed = !task.completed;
       }
-    }
+    },
+    selectTask(state, action: PayloadAction<string>) {
+      if (!state.activeTasks.includes(action.payload)) {
+        state.activeTasks.push(action.payload);
+      }
+    },
+    deselectTask(state, action: PayloadAction<string>) {
+      state.activeTasks = state.activeTasks.filter((id) => id !== action.payload);
+    },
+    clearActiveTasks(state) {
+      state.activeTasks = [];
+    },
+    toggleSelectedTasks(state) {
+      state.activeTasks.forEach((id) => {
+        const task = state.tasks.find((task) => task._id === id);
+        if (task) {
+          task.completed = !task.completed;
+        }
+      });
+    },
+    deleteActiveTasks(state) {
+      state.tasks = state.tasks.filter((task) => !state.activeTasks.includes(task._id));
+      state.activeTasks = [];
+    },
+    deleteTaskFromQuadrant(state, action: PayloadAction<string>) {
+      state.tasks = state.tasks.filter((task) => task.quadrantId !== action.payload);
+    },
   },
 });
 
@@ -106,7 +136,12 @@ export const {
   deleteTaskFailure,
   clearAllTasks,
   setSearchQuery,
-  toggleTask
+  toggleTask,
+  selectTask,
+  deselectTask,
+  toggleSelectedTasks,
+  deleteActiveTasks,
+  deleteTaskFromQuadrant,
 } = taskSlice.actions;
 
 export default taskSlice.reducer;

@@ -30,6 +30,10 @@ const Login: React.FC = () => {
     }
   })
 
+  const goToRegister = () => {
+    navigate("/register");
+  }
+
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4">Login</h2>
@@ -56,6 +60,13 @@ const Login: React.FC = () => {
           {auth.loading ? "Logging in..." : "Login"}
         </button>
       </form>
+
+      <div className="mt-4 text-center">
+        <p className="text-gray-600">
+          Don't have a unique ID? <button onClick={goToRegister} className="text-blue-600">Register</button>
+        </p>
+
+      </div>
     </div>
   );
 };

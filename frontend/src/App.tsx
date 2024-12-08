@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Register from "@/components/auth/Register";
 import Login from "@/components/auth/Login";
 import QuadrantContainer from "@/components/quadrants/QuadrantContainer";
+import GlobalContextMenu from "@/components/context-menu";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import PrivateRoute from "@/components/PrivateRoute";
@@ -28,6 +29,7 @@ function App() {
             }
           />
         </Routes>
+        <GlobalContextMenu />
       </div>
     </Router>
   );
