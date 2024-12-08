@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginRequest } from "@/redux/slices/authSlice";
 import { RootState } from "@/redux/store";
@@ -11,6 +11,8 @@ const Login: React.FC = () => {
 
   const auth = useSelector((state: RootState) => state.auth);
 
+  console.log("auth", auth);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (uniqueID.trim()) {
@@ -21,6 +23,12 @@ const Login: React.FC = () => {
   if (auth.token) {
     navigate("/tasks");
   }
+
+  useEffect(() => {
+    if (auth.token) {
+      navigate("/tasks");
+    }
+  })
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">

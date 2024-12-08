@@ -30,6 +30,10 @@ function* handleRegister(action: PayloadAction<string>): SagaIterator {
     const response: AxiosResponse<AuthResponse> = yield call(registerApi, uniqueID);
     const { token, username } = response.data;
 
+    console.log("usernmae", username);
+    console.log("token", token);
+    console.log("response", response);
+
     if (!token || !username) {
       throw new Error("Invalid response from server");
     }
