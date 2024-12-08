@@ -36,7 +36,7 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 
-app.use('/tasks', authRoutes);
+app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
 
 app.use(errorHandler);
