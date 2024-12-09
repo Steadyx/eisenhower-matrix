@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import Quadrant from "./Quadrant";
-import SearchBar from "@/components/search";
+import SearchBar from "@components/search";
 import { useDispatch, useSelector } from "react-redux";
-import { clearAllTasksRequest, fetchTasksRequest } from "@/redux/slices/taskSlice";
-import LogoutButton from "@/components/LogoutButton";
-import { RootState } from "@/redux/store";
+import { clearAllTasksRequest, fetchTasksRequest } from "@redux/slices/taskSlice";
+import LogoutButton from "@components/LogoutButton";
+import { RootState } from "@redux/store";
 
 const QuadrantContainer = () => {
   const dispatch = useDispatch();

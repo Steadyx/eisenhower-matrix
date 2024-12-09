@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "@/redux/store";
-import { deleteActiveTasks, toggleSelectedTasks } from "@/redux/slices/taskSlice";
+import { RootState } from "@redux/store";
+import { deleteActiveTasks, toggleSelectedTasks } from "@redux/slices/taskSlice";
 
 const GlobalContextMenu: FC = () => {
   const dispatch = useDispatch();

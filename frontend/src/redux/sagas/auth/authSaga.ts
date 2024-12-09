@@ -7,22 +7,11 @@ import {
   loginRequest,
   loginSuccess,
   loginFailure,
-} from "../slices/authSlice";
+} from "@redux/slices/authSlice";
 import { SagaIterator } from "redux-saga";
 import { PayloadAction } from "@reduxjs/toolkit";
-
-const API_URL = "http://localhost:4000";
-
-interface AuthResponse {
-  token: string;
-  username: string;
-}
-
-const registerApi = (uniqueID: string): Promise<AxiosResponse<AuthResponse>> =>
-  axios.post<AuthResponse>(`${API_URL}/auth/register`, { uniqueID });
-
-const loginApi = (uniqueID: string): Promise<AxiosResponse<AuthResponse>> =>
-  axios.post<AuthResponse>(`${API_URL}/auth/login`, { uniqueID });
+import { registerApi, loginApi } from "@redux/sagas/auth/authApi";
+import { AuthResponse } from "@redux/sagas/auth/authTypes";
 
 function* handleRegister(action: PayloadAction<string>): SagaIterator {
   try {

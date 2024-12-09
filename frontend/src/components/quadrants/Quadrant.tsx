@@ -1,9 +1,9 @@
 // Quadrant.tsx
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "@/redux/store";
-import TaskList from "@/components/task/TaskList";
-import TaskForm from "@/components/task/TaskForm";
+import { RootState } from "@redux/store";
+import TaskList from "@components/task/TaskList";
+import TaskForm from "@components/task/TaskForm";
 import QuadrantHeader from "./QuadrantHeader";
 
 import {
@@ -12,7 +12,7 @@ import {
   fetchTasksRequest,
   deleteTaskRequest,
   deleteTaskFromQuadrantRequest,
-} from "@/redux/slices/taskSlice";
+} from "@redux/slices/taskSlice";
 
 interface QuadrantProps {
   quadrantId: string;

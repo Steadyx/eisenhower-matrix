@@ -1,7 +1,6 @@
-// src/redux/sagas/index.ts
 import { all, fork } from "redux-saga/effects";
-import authSagas from "./authSaga";
-import taskSagas from "./taskSagas";
+import authSagas from "@redux/sagas/auth/authSaga"
+import taskSagas from "@redux/sagas/task/taskSagas";
 
 export default function* rootSaga() {
   yield all([

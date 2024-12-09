@@ -1,8 +1,8 @@
 import React, { useState, useEffect, FormEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { registerRequest } from "@/redux/slices/authSlice";
+import { registerRequest } from "@redux/slices/authSlice";
 import { useNavigate } from "react-router-dom";
-import { RootState } from "@/redux/store";
+import { RootState } from "@redux/store";
 
 const Register: React.FC = () => {
   const dispatch = useDispatch();

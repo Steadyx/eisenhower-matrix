@@ -1,12 +1,12 @@
 import { FC } from "react";
 import { useDispatch } from "react-redux";
-import { updateTaskRequest } from "@/redux/slices/taskSlice";
-import { Task } from "@/types/task";
+import { updateTaskRequest } from "@redux/slices/taskSlice"
+import { Task } from "src/types/task";
 
 interface TaskItemProps {
   task: Task;
   toggleTask: (id: string, currentStatus: boolean) => void;
-  deleteTask: (id: string) => void; // Adjusted
+  deleteTask: (id: string) => void;
 }
 
 const TaskItem: FC<TaskItemProps> = ({ task }) => {

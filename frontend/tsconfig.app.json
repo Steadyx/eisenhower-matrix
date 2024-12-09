@@ -6,9 +6,15 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "baseUrl": "./",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@components/*": ["src/components/*"],
+      "@api/*": ["src/api/*"],
+      "@assets/*": ["src/assets/*"],
+      "@redux/*": ["src/redux/*"],
+      "@types/*": ["src/types/*"],
+      "@styles/*": ["src/*.css"],
+      "@utils/*": ["src/utils/*"] // Add if you have utility files
     },
     /* Bundler mode */
     "moduleResolution": "bundler",
