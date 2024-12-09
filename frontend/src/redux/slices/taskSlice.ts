@@ -4,6 +4,7 @@ interface Task {
   _id: string;
   title: string;
   completed: boolean;
+  selected: boolean;
   quadrantId: string;
 }
 
@@ -133,8 +134,9 @@ const taskSlice = createSlice({
       state.tasks = state.tasks.filter((task) => !ids.includes(task._id));
       state.activeTasks = state.activeTasks.filter((id) => !ids.includes(id));
     },
-    deleteTaskFromQuadrantRequest(_state, _action: PayloadAction<string>) {
-      // Optionally, you can set a loading state here
+    deleteTaskFromQuadrantRequest(state, _action: PayloadAction<string>) {
+      state.loading = true;
+      state.error = null;
     },
     // Action to handle successful deletion
     deleteTaskFromQuadrantSuccess(state, action: PayloadAction<string>) {

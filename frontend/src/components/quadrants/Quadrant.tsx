@@ -1,5 +1,5 @@
 // Quadrant.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import TaskList from "@/components/task/TaskList";
@@ -9,6 +9,7 @@ import QuadrantHeader from "./QuadrantHeader";
 import {
   createTaskRequest,
   updateTaskRequest,
+  fetchTasksRequest,
   deleteTaskRequest,
   deleteTaskFromQuadrantRequest,
 } from "@/redux/slices/taskSlice";
@@ -26,7 +27,8 @@ const Quadrant: React.FC<QuadrantProps> = ({ quadrantId, title }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const toggleTask = (id: string, currentStatus: boolean) => {
-    dispatch(updateTaskRequest({ id, updates: { completed: !currentStatus } }));
+    const updates = { completed: !currentStatus, selected: !currentStatus };
+    dispatch(updateTaskRequest({ id, updates }));
   };
 
   const deleteTask = (id: string) => {
@@ -51,6 +53,10 @@ const Quadrant: React.FC<QuadrantProps> = ({ quadrantId, title }) => {
   const clearAllTasks = () => {
     dispatch(deleteTaskFromQuadrantRequest(quadrantId));
   };
+
+  useEffect(() => {
+    dispatch(fetchTasksRequest());
+  }, [dispatch]);
 
   return (
     <div className="bg-gray-100 p-6 rounded-xl shadow-lg h-[400px] flex flex-col">

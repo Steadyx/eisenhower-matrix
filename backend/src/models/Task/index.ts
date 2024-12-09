@@ -5,6 +5,7 @@ export interface ITask extends Document {
   title: string;
   completed: boolean;
   quadrantId: string;
+  selected?: boolean;
   user: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -18,6 +19,10 @@ const TaskSchema: Schema = new Schema<ITask>(
       trim: true,
     },
     completed: {
+      type: Boolean,
+      default: false,
+    },
+    selected: {
       type: Boolean,
       default: false,
     },

@@ -1,31 +1,30 @@
 import { FC } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { toggleTask, selectTask, deselectTask } from "@/redux/slices/taskSlice";
-import { RootState } from "@/redux/store";
+import { useDispatch } from "react-redux";
+import { updateTaskRequest } from "@/redux/slices/taskSlice";
 import { Task } from "@/types/task";
 
 interface TaskItemProps {
-  key: string;
   task: Task;
   toggleTask: (id: string, currentStatus: boolean) => void;
-  deleteTask: (id: string, currentStatus: boolean) => void;
+  deleteTask: (id: string) => void; // Adjusted
 }
 
 const TaskItem: FC<TaskItemProps> = ({ task }) => {
   const dispatch = useDispatch();
-  const activeTasks = useSelector((state: RootState) => state.tasks.activeTasks);
-  const isSelected = activeTasks.includes(task._id);
+  const isSelected = task.selected;
 
   const handleCheckboxChange = () => {
-    if (isSelected) {
-      dispatch(deselectTask(task._id));
-    } else {
-      dispatch(selectTask(task._id));
-    }
+    const updates = {
+      selected: !isSelected,
+    };
+    dispatch(updateTaskRequest({ id: task._id, updates }));
   };
 
   const handleToggle = () => {
-    dispatch(toggleTask(task._id));
+    const updates = {
+      completed: !task.completed,
+    };
+    dispatch(updateTaskRequest({ id: task._id, updates }));
   };
 
   return (
