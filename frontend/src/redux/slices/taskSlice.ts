@@ -88,9 +88,17 @@ const taskSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
-    clearAllTasks(state) {
+    clearAllTasksRequest(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    clearAllTasksSuccess(state) {
       state.tasks = [];
       state.activeTasks = [];
+    },
+    clearAllTasksFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
     },
     setSearchQuery(state, action: PayloadAction<string>) {
       state.searchQuery = action.payload;
@@ -133,7 +141,6 @@ const taskSlice = createSlice({
       const quadrantId = action.payload;
       state.tasks = state.tasks.filter((task) => task.quadrantId !== quadrantId);
     },
-    // Action to handle deletion failure
     deleteTaskFromQuadrantFailure(state, action: PayloadAction<string>) {
       state.error = action.payload;
     },
@@ -156,7 +163,9 @@ export const {
   deleteTaskFromQuadrantRequest,
   deleteTaskFromQuadrantSuccess,
   deleteTaskFromQuadrantFailure,
-  clearAllTasks,
+  clearAllTasksRequest,
+  clearAllTasksSuccess,
+  clearAllTasksFailure,
   setSearchQuery,
   toggleTask,
   selectTask,

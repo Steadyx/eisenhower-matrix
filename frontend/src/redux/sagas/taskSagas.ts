@@ -15,7 +15,10 @@ import {
   deleteTaskFailure,
   deleteTaskFromQuadrantRequest,
   deleteTaskFromQuadrantSuccess,
-  deleteTaskFromQuadrantFailure
+  deleteTaskFromQuadrantFailure,
+  clearAllTasksRequest,
+  clearAllTasksSuccess,
+  clearAllTasksFailure,
 } from "../slices/taskSlice";
 import { RootState } from "../store";
 import { SagaIterator } from "redux-saga";
@@ -114,6 +117,46 @@ function* handleCreateTask(action: PayloadAction<{ title: string; quadrantId: st
     }
 
     yield put(createTaskFailure(errorMessage));
+  }
+}
+
+function* handleClearAllTasks(): SagaIterator {
+  try {
+    const token: string | null = yield select((state: RootState) => state.auth.token);
+    const taskIds: string[] = yield select((state: RootState) => state.tasks.tasks.map((task) => task._id));
+
+    if (!token) {
+      throw new Error("Authentication token is missing. Please log in again.");
+    }
+
+    yield all(taskIds.map((id) => call(deleteTaskApi, id, token)));
+
+    yield put(clearAllTasksSuccess());
+  } catch (error: unknown) {
+    let errorMessage = "An unknown error occurred while clearing tasks.";
+
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        // Server responded with a status code outside the 2xx range
+        errorMessage = error.response.data?.error || "Failed to clear all tasks.";
+        console.error(`API Error [${error.response.status}]: ${errorMessage}`);
+      } else if (error.request) {
+        // Request was made but no response was received
+        errorMessage = "No response from the server. Please check your network connection.";
+        console.error("API Request Error: No response received.", error.request);
+      } else {
+        // Something happened while setting up the request
+        errorMessage = error.message || "An error occurred during the request.";
+        console.error("API Setup Error:", error.message);
+      }
+    } else if (error instanceof Error) {
+      // Generic JavaScript error
+      errorMessage = error.message;
+      console.error("Error:", error.message);
+    }
+
+    // Dispatch failure action with the error message
+    yield put(clearAllTasksFailure(errorMessage));
   }
 }
 
@@ -265,6 +308,10 @@ export function* watchDeleteTasksFromQuadrant(): SagaIterator {
   yield takeLatest(deleteTaskFromQuadrantRequest.type, handleDeleteTasksFromQuadrant);
 }
 
+function* watchClearAllTasks(): SagaIterator {
+  yield takeLatest(clearAllTasksRequest.type, handleClearAllTasks);
+}
+
 export default function* taskSagas(): SagaIterator {
   yield all([
     fork(watchFetchTasks),
@@ -273,5 +320,6 @@ export default function* taskSagas(): SagaIterator {
     fork(watchDeleteTask),
     fork(watchDeleteActiveTasks),
     fork(watchDeleteTasksFromQuadrant),
+    fork(watchClearAllTasks),
   ]);
 }

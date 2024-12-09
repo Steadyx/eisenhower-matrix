@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
-import { clearAllTasks, deleteActiveTasks, toggleSelectedTasks } from "@/redux/slices/taskSlice";
+import { deleteActiveTasks, toggleSelectedTasks } from "@/redux/slices/taskSlice";
 
 const GlobalContextMenu: FC = () => {
   const dispatch = useDispatch();
@@ -14,12 +14,6 @@ const GlobalContextMenu: FC = () => {
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-gray-800 shadow-lg rounded-md border p-4 flex gap-4 justify-center items-center">
       <span>{activeTaskCount} task(s) selected</span>
 
-      <button
-        onClick={() => dispatch(clearAllTasks())}
-        className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"
-      >
-        Clear Selection
-      </button>
       <button
         onClick={() => dispatch(toggleSelectedTasks())}
         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"

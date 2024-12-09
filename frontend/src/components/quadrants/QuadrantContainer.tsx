@@ -1,9 +1,8 @@
-// src/components/quadrants/QuadrantContainer.tsx
 import { useEffect } from "react";
 import Quadrant from "./Quadrant";
 import SearchBar from "@/components/search";
 import { useDispatch, useSelector } from "react-redux";
-import { clearAllTasks, fetchTasksRequest } from "@/redux/slices/taskSlice";
+import { clearAllTasksRequest, fetchTasksRequest } from "@/redux/slices/taskSlice";
 import LogoutButton from "@/components/LogoutButton";
 import { RootState } from "@/redux/store";
 
@@ -22,7 +21,7 @@ const QuadrantContainer = () => {
           <SearchBar />
           <div className="flex justify-end">
             <button
-              onClick={() => dispatch(clearAllTasks())}
+              onClick={() => dispatch(clearAllTasksRequest())}
               className="px-4 py-2 my-8 bg-red-500 text-white rounded-lg hover:bg-red-600"
             >
               Delete All Tasks

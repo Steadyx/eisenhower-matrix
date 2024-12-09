@@ -34,7 +34,7 @@ const Register: React.FC = () => {
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="uniqueID" className="block text-gray-700">
-            Unique ID
+            Sign In name - (save it somewhere safe)
           </label>
           <input
             type="text"

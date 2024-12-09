@@ -1,7 +1,7 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { logout } from "@/redux/slices/authSlice";
-import { clearAllTasks } from "@/redux/slices/taskSlice";
+import { clearAllTasksRequest } from "@/redux/slices/taskSlice";
 import { useNavigate } from "react-router-dom";
 
 const LogoutButton: React.FC = () => {
@@ -13,7 +13,7 @@ const LogoutButton: React.FC = () => {
     localStorage.removeItem("username");
 
     dispatch(logout());
-    dispatch(clearAllTasks());
+    dispatch(clearAllTasksRequest());
 
     navigate("/login");
   };

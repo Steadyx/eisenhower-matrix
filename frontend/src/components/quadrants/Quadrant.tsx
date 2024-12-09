@@ -10,7 +10,7 @@ import {
   createTaskRequest,
   updateTaskRequest,
   deleteTaskRequest,
-  deleteTaskFromQuadrantRequest, // Import the request action
+  deleteTaskFromQuadrantRequest,
 } from "@/redux/slices/taskSlice";
 
 interface QuadrantProps {
