@@ -1,3 +1,4 @@
+// Quadrant.tsx
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -9,7 +10,7 @@ import {
   createTaskRequest,
   updateTaskRequest,
   deleteTaskRequest,
-  deleteTaskFromQuadrant
+  deleteTaskFromQuadrantRequest, // Import the request action
 } from "@/redux/slices/taskSlice";
 
 interface QuadrantProps {
@@ -41,13 +42,15 @@ const Quadrant: React.FC<QuadrantProps> = ({ quadrantId, title }) => {
     setSearchQuery(e.target.value);
   };
 
-  console.log('gloobalQuery', globalQuery);
-
   const filteredTasks = tasks.filter((task) => {
     const query = globalQuery ? globalQuery : searchQuery;
 
     return task.quadrantId === quadrantId && task.title.toLowerCase().includes(query.toLowerCase());
   });
+
+  const clearAllTasks = () => {
+    dispatch(deleteTaskFromQuadrantRequest(quadrantId));
+  };
 
   return (
     <div className="bg-gray-100 p-6 rounded-xl shadow-lg h-[400px] flex flex-col">
@@ -70,27 +73,28 @@ const Quadrant: React.FC<QuadrantProps> = ({ quadrantId, title }) => {
           />
         </div>
 
-        <div className="pt-4 mt-auto">
-          {isAdding ? (
-            <TaskForm addTask={addTask} cancel={() => setIsAdding(false)} />
-          ) : (
-            <button
-              onClick={() => setIsAdding(true)}
-              className="w-full py-2 border-dashed border-2 rounded-lg text-gray-600 hover:text-gray-800 hover:border-gray-400"
-            >
-              + Add Task
-            </button>
-          )}
+        <div className="flex justify-between items-center mt-4">
+          <div className="pt-4 mt-auto w-1/2">
+            {isAdding ? (
+              <TaskForm addTask={addTask} cancel={() => setIsAdding(false)} />
+            ) : (
+              <button
+                onClick={() => setIsAdding(true)}
+                className="w-full py-2 border-dashed border-2 rounded-lg text-gray-600 hover:text-gray-800 hover:border-gray-400"
+              >
+                + Add Task
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={clearAllTasks}
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+          >
+            Delete Tasks
+          </button>
         </div>
       </div>
-
-      {/* Clear All Tasks Button */}
-      <button
-        onClick={() => dispatch(deleteTaskFromQuadrant(quadrantId))}
-        className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-      >
-        Clear All Tasks
-      </button>
     </div>
   );
 };

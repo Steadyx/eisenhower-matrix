@@ -1,4 +1,3 @@
-// src/redux/sagas/taskSagas.ts
 import { takeLatest, call, put, select, all, fork } from "redux-saga/effects";
 import axios, { AxiosResponse } from "axios";
 import {
@@ -14,6 +13,9 @@ import {
   deleteTaskRequest,
   deleteTaskSuccess,
   deleteTaskFailure,
+  deleteTaskFromQuadrantRequest,
+  deleteTaskFromQuadrantSuccess,
+  deleteTaskFromQuadrantFailure
 } from "../slices/taskSlice";
 import { RootState } from "../store";
 import { SagaIterator } from "redux-saga";
@@ -22,7 +24,7 @@ import { PayloadAction } from "@reduxjs/toolkit";
 const API_URL = "http://localhost:4000";
 
 interface TaskResponse {
-  id: string;
+  _id: string;
   title: string;
   completed: boolean;
   quadrantId: string;
@@ -50,10 +52,19 @@ const updateTaskApi = (
     headers: { Authorization: `Bearer ${token}` },
   });
 
-const deleteTaskApi = (id: string, token: string): Promise<AxiosResponse<void>> =>
-  axios.delete<void>(`${API_URL}/tasks/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const deleteTaskApi = async (id: string, token: string): Promise<void> => {
+  try {
+    await axios.delete(`${API_URL}/tasks/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      console.warn(`Task with ID ${id} not found (404). Skipping.`);
+      return;
+    }
+    throw error;
+  }
+};
 
 function* handleFetchTasks(): SagaIterator {
   try {
@@ -133,6 +144,7 @@ function* handleUpdateTask(action: PayloadAction<{ id: string; updates: Partial<
 }
 
 function* handleDeleteTask(action: PayloadAction<string>): SagaIterator {
+  console.log('handleDeleteTask');
   try {
     const id = action.payload;
     const token: string | null = yield select((state: RootState) => state.auth.token);
@@ -140,7 +152,6 @@ function* handleDeleteTask(action: PayloadAction<string>): SagaIterator {
     if (!token) {
       throw new Error("Authentication token is missing.");
     }
-
     yield call(deleteTaskApi, id, token);
     yield put(deleteTaskSuccess(id));
   } catch (error: unknown) {
@@ -152,9 +163,81 @@ function* handleDeleteTask(action: PayloadAction<string>): SagaIterator {
       errorMessage = error.message;
     } else {
       errorMessage = "Failed to delete task.";
+      console.log('ERROR', errorMessage);
     }
 
     yield put(deleteTaskFailure(errorMessage));
+  }
+}
+
+function* handleDeleteTasksFromQuadrant(action: PayloadAction<string>): SagaIterator {
+  try {
+    const quadrantId = action.payload;
+    const token: string | null = yield select((state: RootState) => state.auth.token);
+
+    if (!token) {
+      throw new Error("Authentication token is missing.");
+    }
+
+    // Get tasks from the state
+    const tasks: TaskResponse[] = yield select((state: RootState) => state.tasks.tasks);
+
+    // Filter tasks by quadrantId and extract their IDs
+    const ids = tasks.filter((task) => task.quadrantId === quadrantId).map((task) => task._id);
+
+    if (ids.length === 0) {
+      console.warn(`No tasks found in quadrant ${quadrantId}.`);
+      return;
+    }
+
+    console.log('Tasks to delete:', ids);
+
+    // Perform API calls to delete each task in parallel
+    yield all(ids.map((id) => call(deleteTaskApi, id, token)));
+
+    // Dispatch success action after all deletions are successful
+    yield put(deleteTaskFromQuadrantSuccess(quadrantId));
+  } catch (error) {
+    const errorMessage = getErrorMessage(error);
+    yield put(deleteTaskFromQuadrantFailure(errorMessage));
+  }
+}
+
+function* handleDeleteActiveTasks(action: PayloadAction<string[]>): SagaIterator {
+  const ids = action.payload;
+
+  try {
+    const token: string | null = yield select((state: RootState) => state.auth.token);
+
+    if (!token) {
+      throw new Error("Authentication token is missing.");
+    }
+
+    yield all(ids.map((id) => call(deleteTaskWithErrorHandling, id, token)));
+  } catch (error) {
+    yield put(deleteTaskFailure(getErrorMessage(error)));
+  }
+}
+
+function* deleteTaskWithErrorHandling(id: string, token: string): SagaIterator {
+  try {
+    yield call(deleteTaskApi, id, token);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      console.warn(`Task with ID ${id} not found (404). Skipping.`);
+    } else {
+      throw error;
+    }
+  }
+}
+
+function getErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.error || "Failed to delete tasks.";
+  } else if (error instanceof Error) {
+    return error.message;
+  } else {
+    return "Failed to delete tasks.";
   }
 }
 
@@ -174,11 +257,21 @@ function* watchDeleteTask(): SagaIterator {
   yield takeLatest(deleteTaskRequest.type, handleDeleteTask);
 }
 
+function* watchDeleteActiveTasks(): SagaIterator {
+  yield takeLatest("tasks/deleteActiveTasks", handleDeleteActiveTasks);
+}
+
+export function* watchDeleteTasksFromQuadrant(): SagaIterator {
+  yield takeLatest(deleteTaskFromQuadrantRequest.type, handleDeleteTasksFromQuadrant);
+}
+
 export default function* taskSagas(): SagaIterator {
   yield all([
     fork(watchFetchTasks),
     fork(watchCreateTask),
     fork(watchUpdateTask),
     fork(watchDeleteTask),
+    fork(watchDeleteActiveTasks),
+    fork(watchDeleteTasksFromQuadrant),
   ]);
 }

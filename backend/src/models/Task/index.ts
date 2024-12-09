@@ -1,9 +1,11 @@
+// src/models/Task.ts
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface ITask extends Document {
   title: string;
   completed: boolean;
   quadrantId: string;
+  user: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +30,11 @@ const TaskSchema: Schema = new Schema<ITask>(
         "urgent-not-important",
         "not-urgent-not-important",
       ],
+    },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
     },
   },
   {

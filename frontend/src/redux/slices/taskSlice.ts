@@ -1,11 +1,20 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export interface Task {
+interface Task {
   _id: string;
   title: string;
   completed: boolean;
   quadrantId: string;
 }
+
+interface TaskState {
+  tasks: Task[];
+  loading: boolean;
+  error: string | null;
+  searchQuery: string;
+  activeTasks: string[];
+}
+
 
 interface TaskState {
   tasks: Task[];
@@ -111,12 +120,22 @@ const taskSlice = createSlice({
         }
       });
     },
-    deleteActiveTasks(state) {
-      state.tasks = state.tasks.filter((task) => !state.activeTasks.includes(task._id));
-      state.activeTasks = [];
+    deleteActiveTasks(state, action: PayloadAction<string[]>) {
+      const ids = action.payload;
+      state.tasks = state.tasks.filter((task) => !ids.includes(task._id));
+      state.activeTasks = state.activeTasks.filter((id) => !ids.includes(id));
     },
-    deleteTaskFromQuadrant(state, action: PayloadAction<string>) {
-      state.tasks = state.tasks.filter((task) => task.quadrantId !== action.payload);
+    deleteTaskFromQuadrantRequest(_state, _action: PayloadAction<string>) {
+      // Optionally, you can set a loading state here
+    },
+    // Action to handle successful deletion
+    deleteTaskFromQuadrantSuccess(state, action: PayloadAction<string>) {
+      const quadrantId = action.payload;
+      state.tasks = state.tasks.filter((task) => task.quadrantId !== quadrantId);
+    },
+    // Action to handle deletion failure
+    deleteTaskFromQuadrantFailure(state, action: PayloadAction<string>) {
+      state.error = action.payload;
     },
   },
 });
@@ -134,6 +153,9 @@ export const {
   deleteTaskRequest,
   deleteTaskSuccess,
   deleteTaskFailure,
+  deleteTaskFromQuadrantRequest,
+  deleteTaskFromQuadrantSuccess,
+  deleteTaskFromQuadrantFailure,
   clearAllTasks,
   setSearchQuery,
   toggleTask,
@@ -141,7 +163,6 @@ export const {
   deselectTask,
   toggleSelectedTasks,
   deleteActiveTasks,
-  deleteTaskFromQuadrant,
 } = taskSlice.actions;
 
 export default taskSlice.reducer;

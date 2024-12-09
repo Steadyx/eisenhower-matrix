@@ -1,49 +1,96 @@
+// src/controllers/taskController.ts
 import { Request, Response } from "express";
 import * as taskService from "@services/taskService";
 
-export const getTasks = async (_req: Request, res: Response) => {
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    username: string;
+  };
+}
+
+export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const tasks = await taskService.getAllTasks();
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    console.log("Received getTasks request for user:", userId);
+    const tasks = await taskService.getAllTasksByUser(userId);
     res.status(200).json(tasks);
   } catch (error) {
+    console.error("Error in getTasks:", error);
     if (error instanceof Error) {
       res.status(500).json({ error: error.message });
     }
   }
 };
 
-export const addTask = async (req: Request, res: Response) => {
+export const addTask = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { title, quadrantId } = req.body;
-    const task = await taskService.createTask(title, quadrantId);
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    console.log("Received addTask request:", { title, quadrantId, userId });
+    const task = await taskService.createTask(title, quadrantId, userId);
     res.status(201).json(task);
   } catch (error) {
+    console.error("Error in addTask:", error);
     if (error instanceof Error) {
       res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
     }
   }
 };
 
-export const updateTask = async (req: Request, res: Response) => {
+export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const updates = req.body;
-    const task = await taskService.updateTask(id, updates);
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    console.log("Received updateTask request:", { id, updates, userId });
+    const task = await taskService.updateTask(id, updates, userId);
+    if (!task) {
+      res.status(404).json({ error: 'Task not found or not authorized' });
+      return;
+    }
+    console.log("Task updated:", task);
     res.status(200).json(task);
   } catch (error) {
+    console.error("Error in updateTask:", error);
     if (error instanceof Error) {
       res.status(400).json({ error: error.message });
     }
   }
 };
 
-
-export const deleteTask = async (req: Request, res: Response) => {
+export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const task = await taskService.deleteTask(id);
-    res.status(200).json(task);
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    console.log("Received deleteTask request:", { id, userId });
+    const task = await taskService.deleteTask(id, userId);
+    if (!task) {
+      res.status(404).json({ error: 'Task not found or not authorized' });
+      return;
+    }
+    console.log("Task deleted:", task);
+    res.status(200).json({ message: 'Task deleted successfully' });
   } catch (error) {
+    console.error("Error in deleteTask:", error);
     if (error instanceof Error) {
       res.status(400).json({ error: error.message });
     }
