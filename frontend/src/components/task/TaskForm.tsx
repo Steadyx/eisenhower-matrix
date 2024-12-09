@@ -19,14 +19,16 @@ const TaskForm: FC<TaskFormProps> = ({ addTask, cancel }) => {
   return (
     <form onSubmit={handleSubmit}>
       <div className="flex gap-2">
-        <input
-          type="text"
-          value={newTaskTitle}
-          onChange={(e) => setNewTaskTitle(e.target.value)}
-          placeholder="Enter task title..."
-          className="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800"
-          autoFocus
-        />
+        <div className="flex-1 w-32">
+          <input
+            type="text"
+            value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
+            placeholder="Enter task title..."
+            className="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+            autoFocus
+          />
+        </div>
         <button
           type="submit"
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"

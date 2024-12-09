@@ -105,7 +105,6 @@ function* handleClearAllTasks(): SagaIterator {
       }
     } else if (error instanceof Error) {
       errorMessage = error.message;
-      console.error("Error:", error.message);
     }
 
     yield put(clearAllTasksFailure(errorMessage));
@@ -139,7 +138,6 @@ function* handleUpdateTask(action: PayloadAction<{ id: string; updates: Partial<
 }
 
 function* handleDeleteTask(action: PayloadAction<string>): SagaIterator {
-  console.log('handleDeleteTask');
   try {
     const id = action.payload;
     const token: string | null = yield select((state: RootState) => state.auth.token);
@@ -158,7 +156,6 @@ function* handleDeleteTask(action: PayloadAction<string>): SagaIterator {
       errorMessage = error.message;
     } else {
       errorMessage = "Failed to delete task.";
-      console.log('ERROR', errorMessage);
     }
 
     yield put(deleteTaskFailure(errorMessage));
@@ -181,8 +178,6 @@ function* handleDeleteTasksFromQuadrant(action: PayloadAction<string>): SagaIter
       console.warn(`No tasks found in quadrant ${quadrantId}.`);
       return;
     }
-
-    console.log('Tasks to delete:', ids);
 
     yield all(ids.map((id) => call(deleteTaskApi, id, token)));
 
