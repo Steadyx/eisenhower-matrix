@@ -16,7 +16,7 @@ function App() {
         <Routes>
           <Route
             path="/"
-            element={auth.token ? <Navigate to="/tasks" /> : <Navigate to="/login" />}
+            element={<Navigate to={auth.token ? "/tasks" : "/login"} replace />}
           />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
@@ -28,6 +28,8 @@ function App() {
               </PrivateRoute>
             }
           />
+          {/* Redirect unknown routes to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <GlobalContextMenu />
       </div>

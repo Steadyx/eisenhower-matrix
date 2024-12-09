@@ -11,8 +11,6 @@ const Login: React.FC = () => {
 
   const auth = useSelector((state: RootState) => state.auth);
 
-  console.log("auth", auth);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (uniqueID.trim()) {
@@ -20,19 +18,15 @@ const Login: React.FC = () => {
     }
   };
 
-  if (auth.token) {
-    navigate("/tasks");
-  }
-
   useEffect(() => {
     if (auth.token) {
       navigate("/tasks");
     }
-  })
+  }, [auth.token, navigate]);
 
   const goToRegister = () => {
     navigate("/register");
-  }
+  };
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
@@ -63,9 +57,11 @@ const Login: React.FC = () => {
 
       <div className="mt-4 text-center">
         <p className="text-gray-600">
-          Don't have a unique ID? <button onClick={goToRegister} className="text-blue-600">Register</button>
+          Don't have a unique ID?{" "}
+          <button onClick={goToRegister} className="text-blue-600">
+            Register
+          </button>
         </p>
-
       </div>
     </div>
   );
