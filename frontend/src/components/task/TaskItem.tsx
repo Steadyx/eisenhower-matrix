@@ -30,7 +30,7 @@ const TaskItem: FC<TaskItemProps> = ({ task }) => {
   return (
     <div
       className={`
-        ${task.completed ? "bg-green-50 border-green-200" : "bg-white border-gray-200"}
+        ${task.completed ? "bg-green-100 dark:bg-green-50 border-green-300" : "bg-white border-gray-200"}
         rounded-lg p-4 transition-all duration-200 hover:shadow-md cursor-pointer border flex items-center
       `}
     >

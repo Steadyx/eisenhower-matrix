@@ -2,6 +2,7 @@ import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { useDispatch } from "react-redux";
 import createSagaMiddleware from "redux-saga";
 import taskReducer from "./slices/taskSlice";
+import themeReducer from "./slices/themeSlice";
 import authReducer, { logout } from "./slices/authSlice";
 import rootSaga from "./sagas";
 
@@ -9,6 +10,7 @@ import rootSaga from "./sagas";
 const appReducer = combineReducers({
   tasks: taskReducer,
   auth: authReducer,
+  theme: themeReducer,
 });
 
 // Root reducer with state reset

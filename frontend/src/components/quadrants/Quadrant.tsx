@@ -35,10 +35,8 @@ const Quadrant: React.FC<QuadrantProps> = ({ quadrantId, title }) => {
   };
 
   const closeModal = () => {
-    if (tasksInQuadrant.length === 0) return;
     setIsModalOpen(false);
   };
-
 
   const toggleTask = (id: string, currentStatus: boolean) => {
     const updates = { completed: !currentStatus, selected: !currentStatus };
@@ -60,7 +58,6 @@ const Quadrant: React.FC<QuadrantProps> = ({ quadrantId, title }) => {
 
   const filteredTasks = tasks.filter((task) => {
     const query = globalQuery ? globalQuery : searchQuery;
-
     return task.quadrantId === quadrantId && task.title.toLowerCase().includes(query.toLowerCase());
   });
 
@@ -75,46 +72,53 @@ const Quadrant: React.FC<QuadrantProps> = ({ quadrantId, title }) => {
   }, [dispatch]);
 
   return (
-    <div className="bg-gray-100 p-6 rounded-xl shadow-lg h-[400px] flex flex-col">
-      <QuadrantHeader title={title} />
-
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={handleSearch}
-        placeholder="Search tasks..."
-        className="mb-4 p-2 border rounded focus:outline-none focus:ring focus:border-blue-300 text-gray-800"
-      />
-
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex-1 overflow-y-auto pr-2">
-          <TaskList
-            tasks={filteredTasks}
-            toggleTask={toggleTask}
-            deleteTask={deleteTask}
-          />
+    <div className="dark:bg-gray-100 bg-softWhite rounded-xl shadow-lg h-[450px] sm:h-[500px] lg:h-[550px] flex flex-col overflow-hidden">
+      <div className="p-4 sm:p-6 flex flex-col h-full">
+        {/* Fixed Header Section */}
+        <div className="flex-none">
+          <QuadrantHeader title={title} />
+          <div className="mb-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearch}
+              placeholder="Search tasks..."
+              className="w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 transition-all"
+            />
+          </div>
         </div>
 
-        <div className="flex justify-between items-center mt-4">
-          <div className="pt-4 mt-auto basis-3/4">
-            {isAdding ? (
-              <TaskForm addTask={addTask} cancel={() => setIsAdding(false)} />
-            ) : (
-              <button
-                onClick={() => setIsAdding(true)}
-                className="w-full py-2 border-dashed border-2 rounded-lg text-gray-600 hover:text-gray-800 hover:border-gray-400"
-              >
-                + Add Task
-              </button>
-            )}
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <div className="overflow-y-auto flex-1 pr-2">
+            <TaskList
+              tasks={filteredTasks}
+              toggleTask={toggleTask}
+              deleteTask={deleteTask}
+            />
           </div>
+        </div>
 
-          <button
-            onClick={openModal}
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-          >
-            Delete Tasks
-          </button>
+        <div className="flex-none mt-4">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+            <div className="flex-1">
+              {isAdding ? (
+                <TaskForm addTask={addTask} cancel={() => setIsAdding(false)} />
+              ) : (
+                <button
+                  onClick={() => setIsAdding(true)}
+                  className="w-full py-2 px-4 border-stone-900 dark:border-gray-400 border-dashed border-2 rounded-lg text-gray-600 hover:text-gray-800 hover:border-gray-400 transition-colors"
+                >
+                  + Add Task
+                </button>
+              )}
+            </div>
+            <button
+              onClick={openModal}
+              className="w-full sm:w-auto px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            >
+              Delete Tasks
+            </button>
+          </div>
         </div>
       </div>
 
