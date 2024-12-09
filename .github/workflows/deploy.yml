@@ -3,7 +3,11 @@ name: Deploy to Production
 on:
   push:
     branches:
-      - main  # Trigger workflow only on push events to the main branch
+      - main  # Trigger only on pushes to main
+
+    # Optional: Filter for merge commits only
+    paths-ignore:
+      - '**/*'  # Ignore all changes unless it's a merge commit
 
 jobs:
   deploy:
@@ -11,28 +15,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Set up Docker if you're using containers
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      # Log in to Docker Hub or another container registry
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build and push the Docker image
       - name: Build and push Docker image
         run: |
           docker build -t your-dockerhub-username/your-app:latest .
           docker push your-dockerhub-username/your-app:latest
 
-      # Deploy to the server
       - name: Deploy to server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -43,4 +42,3 @@ jobs:
           docker rm your-container-name || true
           docker run -d --name your-container-name -p 80:80 your-dockerhub-username/your-app:latest
           EOF
-
