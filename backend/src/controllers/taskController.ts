@@ -16,7 +16,6 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
       res.status(401).json({ error: 'User not authenticated' });
       return;
     }
-    console.log("Received getTasks request for user:", userId);
     const tasks = await taskService.getAllTasksByUser(userId);
     res.status(200).json(tasks);
   } catch (error) {
@@ -35,7 +34,6 @@ export const addTask = async (req: AuthenticatedRequest, res: Response) => {
       res.status(401).json({ error: 'User not authenticated' });
       return;
     }
-    console.log("Received addTask request:", { title, quadrantId, userId });
     const task = await taskService.createTask(title, quadrantId, userId);
     res.status(201).json(task);
   } catch (error) {
@@ -57,13 +55,11 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
       res.status(401).json({ error: 'User not authenticated' });
       return;
     }
-    console.log("Received updateTask request:", { id, updates, userId });
     const task = await taskService.updateTask(id, updates, userId);
     if (!task) {
       res.status(404).json({ error: 'Task not found or not authorized' });
       return;
     }
-    console.log("Task updated:", task);
     res.status(200).json(task);
   } catch (error) {
     console.error("Error in updateTask:", error);
@@ -81,13 +77,11 @@ export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
       res.status(401).json({ error: 'User not authenticated' });
       return;
     }
-    console.log("Received deleteTask request:", { id, userId });
     const task = await taskService.deleteTask(id, userId);
     if (!task) {
       res.status(404).json({ error: 'Task not found or not authorized' });
       return;
     }
-    console.log("Task deleted:", task);
     res.status(200).json({ message: 'Task deleted successfully' });
   } catch (error) {
     console.error("Error in deleteTask:", error);

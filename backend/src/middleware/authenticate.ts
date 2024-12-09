@@ -31,11 +31,9 @@ export const authenticate = (
   }
 
   const token = authHeader.split(' ')[1];
-  console.log("Token:", token);
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    console.log("Decoded Token:", decoded);
     req.user = { id: decoded.id, username: decoded.username };
     next();
   } catch (err) {
