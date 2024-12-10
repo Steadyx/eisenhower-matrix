@@ -74,11 +74,14 @@ services:
         condition: on-failure
     environment:
       NODE_ENV: production
-      MONGO_URI_FILE: /run/secrets/mongo_uri
-      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      JWT_SECRET: /run/secrets/jwt_secret
+      MONGO_ROOT_USER: /run/secrets/mongo_root_user
+      MONGO_ROOT_PASSWORD: /run/secrets/mongo_root_password
     secrets:
       - jwt_secret
-      - mongo_uri
+      - mongo_root_user
+      - mongo_root_password
+
 
   mongo:
     image: mongo:latest
