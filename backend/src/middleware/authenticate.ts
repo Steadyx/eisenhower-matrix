@@ -7,7 +7,10 @@ let JWT_SECRET: string = '';
 if (process.env.NODE_ENV === 'production') {
   JWT_SECRET = loadSecret('JWT_SECRET') || '';
 } else {
-  JWT_SECRET = process.env.JWT_SECRET || 'defaultsecret';
+  console.log('Using default JWT secret');
+  JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
+
+  console.log('JWT_SECRET:', JWT_SECRET);
 }
 
 interface JwtPayload {

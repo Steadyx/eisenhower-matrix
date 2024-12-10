@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import fs from 'fs';
-const path = '/run/secrets/';
 
 /**
  * Load a Docker secret from the secrets directory.
@@ -9,6 +8,8 @@ const path = '/run/secrets/';
  * @returns {string} The value of the secret.
  */
 export const loadSecret = (secretName: string): string | null => {
+  const path = '/run/secrets/';
+
   try {
     const secretPath = `${path}${secretName}`;
     return fs.readFileSync(secretPath, 'utf8').trim();

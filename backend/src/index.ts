@@ -1,4 +1,3 @@
-// src/index.ts or src/server.ts
 import express, { Application, Request, Response } from 'express';
 import { errorHandler } from "@middleware/errorHandler";
 import cors from 'cors';

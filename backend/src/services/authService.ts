@@ -1,6 +1,7 @@
 import User, { IUser } from '@models/User';
 import { generateUniqueID, generateUsername, hashID, compareID } from '../utils';
 import jwt from 'jsonwebtoken';
+import { loadSecret } from 'utils'
 
 /**
  * Finds a user by their uniqueID.
@@ -60,7 +61,22 @@ export const authenticate = async (uniqueID: string): Promise<IUser | null> => {
  */
 export const generateJWT = (user: IUser): string => {
   const payload = { id: user._id, username: user.username };
-  const secret = process.env.JWT_SECRET || 'default_secret';
+  let secret;
+
+  if (process.env.NODE_ENV !== 'production') {
+    secret = process.env.JWT_SECRET || 'default_secret';
+
+    if (!process.env.JWT_SECRET) {
+      console.warn('JWT_SECRET is not set! Falling back to default_secret.');
+    }
+  } else {
+    secret = loadSecret('jwt_secret');
+
+    if (!secret) {
+      throw new Error('JWT secret could not be loaded in production!');
+    }
+  }
+
   const options = { expiresIn: '1h' };
   return jwt.sign(payload, secret, options);
 };

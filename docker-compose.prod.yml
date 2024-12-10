@@ -72,6 +72,8 @@ services:
         condition: on-failure
     environment:
       NODE_ENV: production
+      MONGO_URI_FILE: /run/secrets/mongo_uri
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
     secrets:
       - jwt_secret
       - mongo_uri
