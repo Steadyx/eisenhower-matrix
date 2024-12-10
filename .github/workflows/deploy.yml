@@ -102,8 +102,8 @@ jobs:
 
             echo "Creating external Docker secrets..."
             echo "${{ secrets.JWT_SECRET }}" | sudo docker secret create jwt_secret -
-            echo "${{ secrets.MONGO_ROOT_USER }}" | sudo docker secret create mongo_uri -
-            echo "${{ secrets.MONGO_ROOT_PASSWORD }}" | sudo docker secret create mongo_uri -
+            echo "${{ secrets.MONGO_ROOT_USER }}" | sudo docker secret create mongo_user -
+            echo "${{ secrets.MONGO_ROOT_PASSWORD }}" | sudo docker secret create mongo_password -
 
             echo "Deploying the updated stack..."
             sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.prod.yml eisenhower-matrix-app
