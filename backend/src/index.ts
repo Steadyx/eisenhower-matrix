@@ -6,8 +6,6 @@ import * as dotenv from "dotenv";
 import mongoose from 'mongoose';
 import taskRoutes from '@routes/taskRoutes';
 import authRoutes from '@routes/authRoutes';
-import fs from 'fs';
-
 
 // Load environment variables
 dotenv.config();
