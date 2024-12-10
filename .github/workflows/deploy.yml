@@ -58,7 +58,7 @@ jobs:
 
             # Variables
             PROJECT_DIR="/home/edwardkemp/websites/eisenhower-matrix-app"
-            REPO_URL="git@github.com:Steadyx/eisenhower-matrix-app.git"
+            REPO_URL="git@github.com:Steadyx/eisenhower-matrix.git"
             BRANCH="main"
 
             echo "Navigating to project directory..."
