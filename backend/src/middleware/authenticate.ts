@@ -7,10 +7,7 @@ let JWT_SECRET: string = '';
 if (process.env.NODE_ENV === 'production') {
   JWT_SECRET = loadSecret('JWT_SECRET') || '';
 } else {
-  console.log('Using default JWT secret');
   JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
-
-  console.log('JWT_SECRET:', JWT_SECRET);
 }
 
 interface JwtPayload {
@@ -33,7 +30,6 @@ export const authenticate = (
   next: NextFunction
 ): void => {
   const authHeader = req.headers.authorization;
-  console.log("Authorization Header:", authHeader);
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Authentication token missing or invalid' });

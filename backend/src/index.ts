@@ -5,6 +5,7 @@ import * as dotenv from "dotenv";
 import mongoose from 'mongoose';
 import taskRoutes from '@routes/taskRoutes';
 import authRoutes from '@routes/authRoutes';
+import { loadSecret } from 'utils'
 
 // Load environment variables
 dotenv.config();
@@ -13,8 +14,10 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 4000;
 const envionment = process.env.NODE_ENV || 'development';
+const isProduction = envionment === 'production';
+let mongoUri: string;
 
-if (envionment === 'development') {
+if (!isProduction) {
   const corsOptions = {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
@@ -26,12 +29,24 @@ if (envionment === 'development') {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/eisenhower_dev';
+if (isProduction) {
+  const mongoUser = loadSecret('mongo_root_user');
+  const mongoPassword = loadSecret('mongo_root_password');
+
+  // Construct MongoDB URI
+  const mongoHost = process.env.MONGO_HOST || 'mongo';
+  const mongoPort = process.env.MONGO_PORT || '27017';
+  const mongoDatabase = isProduction ? 'eisenhower_prod' : 'eisenhower_dev';
+
+  mongoUri = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:${mongoPort}/${mongoDatabase}`;
+} else {
+  mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/eisenhower_dev'
+}
+
 mongoose
-  .connect(MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((error) => console.error('Error connecting to MongoDB:', error));
+  .connect(mongoUri)
+  .then(() => console.log('Connected to MongoDB!'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
 app.get('/', (_req: Request, res: Response) => {

@@ -8,7 +8,9 @@ volumes:
 secrets:
   jwt_secret:
     external: true
-  mongo_uri:
+  mongo_root_user:
+    external: true
+  mongo_root_password:
     external: true
 
 services:
@@ -25,7 +27,7 @@ services:
       - "--certificatesresolvers.le.acme.email=edwardlanekemp@gmail.com"
       - "--certificatesresolvers.le.acme.storage=/acme.json"
       - "--certificatesresolvers.le.acme.tlsChallenge=true"
-      - "--api.insecure=false" # Disable Traefik dashboard in production
+      - "--api.insecure=false"
     ports:
       - "80:80"
       - "443:443"
@@ -39,8 +41,8 @@ services:
       restart_policy:
         condition: on-failure
 
-  frontend:
-    image: edwardkemp/frontend:latest
+  planit-frontend:
+    image: edwardkemp/planit-frontend:latest
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`planit.edward-codes.com`)"
@@ -56,8 +58,8 @@ services:
     environment:
       VITE_API_URL: "https://planit.edward-codes.com/api"
 
-  backend:
-    image: edwardkemp/backend:latest
+  planet-backend:
+    image: edwardkemp/planit-backend:latest
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`planit.edward-codes.com`) && PathPrefix(`/api`)"
@@ -80,7 +82,7 @@ services:
 
   mongo:
     image: mongo:latest
-    container_name: mongo
+    container_name: planit-mongo
     volumes:
       - mongo-data:/data/db
     networks:
@@ -89,3 +91,10 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+    secrets:
+      - mongo_root_user
+      - mongo_root_password
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: /run/secrets/mongo_root_user
+      MONGO_INITDB_ROOT_PASSWORD: /run/secrets/mongo_root_password
+      MONGO_INITDB_DATABASE: eisenhower_prod

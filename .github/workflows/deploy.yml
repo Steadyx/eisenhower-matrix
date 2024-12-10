@@ -1,24 +1,19 @@
-name: Deploy to Production
+name: Deploy to VPS
 
 on:
   push:
     branches:
-      - main  # Trigger only on pushes to main
-
-    # Optional: Filter for merge commits only
-    paths-ignore:
-      - '**/*'  # Ignore all changes unless it's a merge commit
+      - main
 
 jobs:
   deploy:
-    name: Deploy Application
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Set up Docker
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Log in to Docker Hub
@@ -27,18 +22,90 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
-        run: |
-          docker build -t your-dockerhub-username/your-app:latest .
-          docker push your-dockerhub-username/your-app:latest
+      - name: Build and push planit-frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/planit-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/planit-frontend:${{ github.sha }}
 
-      - name: Deploy to server
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Build and push planit-backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/planit-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/planit-backend:${{ github.sha }}
+
+      - name: Add Host Key to Known Hosts
         run: |
-          ssh -o StrictHostKeyChecking=no user@your-server-address << EOF
-          docker pull your-dockerhub-username/your-app:latest
-          docker stop your-container-name || true
-          docker rm your-container-name || true
-          docker run -d --name your-container-name -p 80:80 your-dockerhub-username/your-app:latest
-          EOF
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.0  
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_KEY }}  
+          port: 22  
+          script: |
+            set -euo pipefail
+            IFS=$'\n\t'
+
+            # Variables
+            PROJECT_DIR="/home/edwardkemp/websites/eisenhower-matrix-app"
+            REPO_URL="git@github.com:Steadyx/eisenhower-matrix-app.git"
+            BRANCH="main"
+
+            echo "Navigating to project directory..."
+            if [ ! -d "$PROJECT_DIR" ]; then
+              echo "Project directory does not exist. Cloning repository..."
+              git clone "$REPO_URL" "$PROJECT_DIR"
+            else
+              echo "Project directory exists. Pulling latest changes..."
+              cd "$PROJECT_DIR"
+
+              echo "Fetching latest changes..."
+              git fetch origin
+
+              echo "Resetting local changes..."
+              git reset --hard origin/"$BRANCH"
+            fi
+
+            echo "Ensuring acme.json exists with correct permissions..."
+            ACME_FILE="$PROJECT_DIR/traefik/acme.json"
+            if [ ! -f "$ACME_FILE" ]; then
+              echo "Creating acme.json file for Let's Encrypt."
+              sudo touch "$ACME_FILE"
+            fi
+            sudo chmod 600 "$ACME_FILE"
+
+            echo "Pulling latest Docker images..."
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/planit-frontend:latest
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/planit-backend:latest
+
+            echo "Stopping existing Docker stack..."
+            sudo docker stack rm planit || echo "Stack planit does not exist."
+
+            echo "Waiting for stack removal..."
+            while sudo docker stack ls | grep -q planit; do
+              echo "Waiting for stack planit to be removed..."
+              sleep 5
+            done
+
+            echo "Pruning Docker system to remove unused data..."
+            sudo docker system prune -f --volumes
+
+            echo "Creating external Docker secrets..."
+            echo "${{ secrets.JWT_SECRET }}" | sudo docker secret create jwt_secret -
+            echo "${{ secrets.MONGO_ROOT_USER }}" | sudo docker secret create mongo_uri -
+            echo "${{ secrets.MONGO_ROOT_PASSWORD }}" | sudo docker secret create mongo_uri -
+
+            echo "Deploying the updated stack..."
+            sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.prod.yml eisenhower-matrix-app
+
+            echo "Deployment completed successfully."
