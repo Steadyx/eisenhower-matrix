@@ -7,9 +7,9 @@ volumes:
 
 secrets:
   jwt_secret:
-    file: ./secrets/jwt_secret
+    file: /run/secrets/jwt_secret
   mongo_uri:
-    file: ./secrets/mongo_uri
+    file: /run/secrets/mongo_uri
 
 services:
   traefik:
