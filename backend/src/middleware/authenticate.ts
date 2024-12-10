@@ -1,7 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { loadSecret } from "utils"
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
+let JWT_SECRET: string = '';
+
+if (process.env.NODE_ENV === 'production') {
+  JWT_SECRET = loadSecret('JWT_SECRET') || '';
+} else {
+  JWT_SECRET = process.env.JWT_SECRET || 'defaultsecret';
+}
 
 interface JwtPayload {
   id: string;

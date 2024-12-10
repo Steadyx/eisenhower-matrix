@@ -1,6 +1,22 @@
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import fs from 'fs';
+const path = '/run/secrets/';
 
+/**
+ * Load a Docker secret from the secrets directory.
+ * @param {string} secretName - The name of the secret to load.
+ * @returns {string} The value of the secret.
+ */
+export const loadSecret = (secretName: string): string | null => {
+  try {
+    const secretPath = `${path}${secretName}`;
+    return fs.readFileSync(secretPath, 'utf8').trim();
+  } catch (error) {
+    console.error(`Error loading secret: ${secretName}`, error);
+    return null;
+  }
+}
 /**
  * Generates a cryptographically secure unique ID.
  * @returns {string} A 128-bit (16-byte) hexadecimal string.

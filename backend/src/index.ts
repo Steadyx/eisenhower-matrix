@@ -6,6 +6,8 @@ import * as dotenv from "dotenv";
 import mongoose from 'mongoose';
 import taskRoutes from '@routes/taskRoutes';
 import authRoutes from '@routes/authRoutes';
+import fs from 'fs';
+
 
 // Load environment variables
 dotenv.config();
@@ -13,15 +15,17 @@ dotenv.config();
 // Initialize Express app
 const app: Application = express();
 const PORT = process.env.PORT || 4000;
+const envionment = process.env.NODE_ENV || 'development';
 
-// CORS Configuration
-const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true,
-};
+if (envionment === 'development') {
+  const corsOptions = {
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
+  }
 
-// Middleware
-app.use(cors(corsOptions));
+  app.use(cors(corsOptions));
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
