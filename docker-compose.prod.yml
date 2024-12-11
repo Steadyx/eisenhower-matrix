@@ -10,6 +10,10 @@ volumes:
 secrets:
   jwt_secret:
     external: true
+  cf_api_key:
+    external: true
+  cf_api_email:
+    external: true
 
 services:
   traefik-sub:
@@ -25,7 +29,8 @@ services:
       - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
       - "--certificatesresolvers.le.acme.email=edwardlanekemp@gmail.com"
       - "--certificatesresolvers.le.acme.storage=/acme-planit.json"
-      - "--certificatesresolvers.le.acme.tlsChallenge=true"
+      - "--certificatesresolvers.le.acme.dnsChallenge.provider=cloudflare"
+      - "--certificatesresolvers.le.acme.dnsChallenge.resolvers=1.1.1.1:53"
       - "--api.insecure=false"
     ports:
       - "8080:8080"
@@ -33,6 +38,12 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./acme-planit.json:/acme-planit.json"
+    secrets:
+      - cf_api_key
+      - cf_api_email
+    environment:
+      CF_API_KEY: /run/secrets/CF_API_KEY
+      CF_API_EMAIL: /run/secrets/CF_API_EMAIL
     networks:
       - app-network
     deploy:
