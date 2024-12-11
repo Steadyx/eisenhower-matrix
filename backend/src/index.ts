@@ -29,11 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 if (isProduction) {
-  const mongoHost = process.env.MONGO_HOST || 'mongo';
-  const mongoPort = process.env.MONGO_PORT || '27017';
-  const mongoDatabase = 'eisenhower_prod';
-
-  mongoUri = `mongodb://${mongoHost}:${mongoPort}/${mongoDatabase}`;
+  mongoUri = `mongodb://mongo:27017/eisenhower_prod`;
 } else {
   mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/eisenhower_dev'
 }
