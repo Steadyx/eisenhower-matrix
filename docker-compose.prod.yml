@@ -33,7 +33,7 @@ services:
       - "8443:8443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./acme.json:/acme.json"
+      - "./acme-planit.json:/acme.json"  # Correct acme.json reference
     networks:
       - app-network
     deploy:
@@ -81,7 +81,6 @@ services:
       - jwt_secret
       - mongo_root_user
       - mongo_root_password
-
 
   mongo:
     image: mongo:latest
