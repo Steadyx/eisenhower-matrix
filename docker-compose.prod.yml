@@ -81,8 +81,8 @@ services:
     secrets:
       - jwt_secret
     depends_on:
-      mongo:
-        condition: service_healthy
+      - mongo
+        
 
   mongo:
     image: mongo:latest
