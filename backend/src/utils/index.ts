@@ -7,15 +7,15 @@ import fs from 'fs';
  * @param {string} secretName - The name of the secret to load.
  * @returns {string} The value of the secret.
  */
-export const loadSecret = (secretName: string): string | null => {
+export const loadSecret = (secretName: string): string => {
   const path = '/run/secrets/';
 
   try {
     const secretPath = `${path}${secretName}`;
     return fs.readFileSync(secretPath, 'utf8').trim();
   } catch (error) {
-    console.error(`Error loading secret: ${secretName}`, error);
-    return null;
+    console.error(`Error loading secret: ${secretName} returning empty string`, error);
+    return '';
   }
 }
 /**
