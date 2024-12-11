@@ -40,10 +40,8 @@ services:
       - "./acme-planit.json:/acme-planit.json"
     secrets:
       - cf_api_key
-      - cf_api_email
     environment:
-      CF_API_KEY: /run/secrets/CF_API_KEY
-      CF_API_EMAIL: /run/secrets/CF_API_EMAIL
+      CF_DNS_API_TOKEN: /run/secrets/CF_API_KEY
     networks:
       - app-network
     deploy:
