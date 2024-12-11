@@ -52,7 +52,7 @@ services:
     networks:
       - app-network
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
     environment:
@@ -69,7 +69,7 @@ services:
     networks:
       - app-network
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
     environment:
