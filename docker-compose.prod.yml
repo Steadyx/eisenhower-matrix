@@ -100,6 +100,9 @@ services:
       - mongo_root_user
       - mongo_root_password
     environment:
-      MONGO_INITDB_ROOT_USERNAME: /run/secrets/mongo_root_user
-      MONGO_INITDB_ROOT_PASSWORD: /run/secrets/mongo_root_password
       MONGO_INITDB_DATABASE: eisenhower_prod
+    entrypoint: >
+      bash -c "export MONGO_INITDB_ROOT_USERNAME=$(cat /run/secrets/mongo_root_user) &&
+               export MONGO_INITDB_ROOT_PASSWORD=$(cat /run/secrets/mongo_root_password) &&
+               exec docker-entrypoint.sh"
+
