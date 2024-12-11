@@ -116,6 +116,6 @@ jobs:
             create_secret jwt_secret "${{ secrets.JWT_SECRET }}"
 
             echo "Deploying the updated stack..."
-            sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.yml eisenhower-matrix-app
+            sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.prod.yml eisenhower-matrix-app
 
             echo "Deployment completed successfully."
