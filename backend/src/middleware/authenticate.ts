@@ -5,7 +5,7 @@ import { loadSecret } from "utils"
 let JWT_SECRET: string = '';
 
 if (process.env.NODE_ENV === 'production') {
-  JWT_SECRET = loadSecret('JWT_SECRET') || '';
+  JWT_SECRET = loadSecret('jwt_secret');
 } else {
   JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
 }
