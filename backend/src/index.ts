@@ -33,12 +33,15 @@ if (isProduction) {
   const mongoUser = loadSecret('mongo_root_user');
   const mongoPassword = loadSecret('mongo_root_password');
 
+  // URL-encode the password
+  const encodedPassword = encodeURIComponent(mongoPassword)
+
   // Construct MongoDB URI
   const mongoHost = process.env.MONGO_HOST || 'mongo';
   const mongoPort = process.env.MONGO_PORT || '27017';
   const mongoDatabase = isProduction ? 'eisenhower_prod' : 'eisenhower_dev';
 
-  mongoUri = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:${mongoPort}/${mongoDatabase}`;
+  mongoUri = `mongodb://${mongoUser}:${encodedPassword}@${mongoHost}:${mongoPort}/${mongoDatabase}`;
 } else {
   mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/eisenhower_dev'
 }
@@ -62,4 +65,5 @@ app.use(errorHandler);
 // Start the Server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Environment currently at: ${envionment}`);
 });
