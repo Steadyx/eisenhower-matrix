@@ -91,11 +91,18 @@ jobs:
             echo "Stopping existing Docker stack..."
             sudo docker stack rm eisenhower-matrix-app || echo "Stack eisenhower-matrix-app does not exist."
 
-            echo "Waiting for stack removal..."
-            while sudo docker stack ls | grep -q eisenhower-matrix-app; do
-              echo "Waiting for stack eisenhower-matrix-app to be removed..."
+            echo "Waiting for stack and network removal..."
+            while sudo docker stack ls | grep -q eisenhower-matrix-app || sudo docker network ls | grep -q eisenhower-matrix-app_app-network; do
+              echo "Waiting for stack or network to be removed..."
               sleep 5
             done
+
+            if ! sudo docker network ls | grep -q eisenhower-matrix-app_app-network; then
+              echo "Creating overlay network..."
+              sudo docker network create --driver overlay eisenhower-matrix-app_app-network
+            else
+              echo "Overlay network already exists."
+            fi
 
             echo "Pruning Docker system to remove unused data..."
             sudo docker system prune -f --volumes
@@ -118,6 +125,17 @@ jobs:
             create_secret cf_api_email "${{ secrets.CF_API_EMAIL }}"
 
             echo "Deploying the updated stack..."
-            sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.prod.yml eisenhower-matrix-app
+            retry_count=0
+            max_retries=3
+            until sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.prod.yml eisenhower-matrix-app || [ $retry_count -eq $max_retries ]; do
+              echo "Retrying stack deployment... Attempt $((retry_count+1))"
+              retry_count=$((retry_count+1))
+              sleep 5
+            done
+
+            if [ $retry_count -eq $max_retries ]; then
+              echo "Failed to deploy stack after $max_retries attempts."
+              exit 1
+            fi
 
             echo "Deployment completed successfully."
