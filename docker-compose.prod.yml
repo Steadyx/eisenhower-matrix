@@ -1,6 +1,8 @@
+version: '3.8'
+
 networks:
   app-network:
-    driver: overlay 
+    driver: overlay
 
 volumes:
   mongo-data:
@@ -14,18 +16,19 @@ secrets:
     external: true
 
 services:
-  traefik:
+  traefik-sub:
     image: traefik:v2.10
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=app-network"
       - "--entrypoints.web.address=:8080"
       - "--entrypoints.websecure.address=:8443"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
       - "--certificatesresolvers.le.acme.email=edwardlanekemp@gmail.com"
-      - "--certificatesresolvers.le.acme.storage=/acme.json"
+      - "--certificatesresolvers.le.acme.storage=/acme-planit.json"
       - "--certificatesresolvers.le.acme.tlsChallenge=true"
       - "--api.insecure=false"
     ports:
@@ -33,7 +36,7 @@ services:
       - "8443:8443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./acme-planit.json:/acme.json"  # Correct acme.json reference
+      - "./acme-planit.json:/acme-planit.json"
     networks:
       - app-network
     deploy:
@@ -58,7 +61,7 @@ services:
     environment:
       VITE_API_URL: "https://planit.edward-codes.com/api"
 
-  planet-backend:
+  planit-backend:
     image: edwardkemp/planit-backend:latest
     labels:
       - "traefik.enable=true"
