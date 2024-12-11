@@ -50,6 +50,8 @@ services:
       - "traefik.http.services.planit-frontend.loadbalancer.server.port=5173"
     networks:
       - app-network
+    depends_on:
+        - mongo
     deploy:
       replicas: 1
       restart_policy:
