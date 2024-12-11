@@ -77,7 +77,7 @@ jobs:
             fi
 
             echo "Ensuring acme.json exists with correct permissions..."
-            ACME_FILE="$PROJECT_DIR/traefik/acme-planit.json"  # Correct acme json file reference
+            ACME_FILE="$PROJECT_DIR/traefik/acme-planit.json"
             if [ ! -f "$ACME_FILE" ]; then
               echo "Creating acme.json file for Let's Encrypt."
               sudo touch "$ACME_FILE"
@@ -101,9 +101,21 @@ jobs:
             sudo docker system prune -f --volumes
 
             echo "Creating external Docker secrets..."
-            echo "${{ secrets.JWT_SECRET }}" | sudo docker secret create jwt_secret -
-            echo "${{ secrets.MONGO_ROOT_USER }}" | sudo docker secret create mongo_root_user -
-            echo "${{ secrets.MONGO_ROOT_PASSWORD }}" | sudo docker secret create mongo_root_password -
+            create_secret() {
+              local secret_name="$1"
+              local secret_value="$2"
+              
+              if sudo docker secret ls --format '{{.Name}}' | grep -q "^$secret_name$"; then
+                echo "Secret $secret_name already exists. Skipping creation."
+              else
+                echo "Creating secret $secret_name."
+                echo "$secret_value" | sudo docker secret create "$secret_name" -
+              fi
+            }
+
+            create_secret jwt_secret "${{ secrets.JWT_SECRET }}"
+            create_secret mongo_root_user "${{ secrets.MONGO_ROOT_USER }}"
+            create_secret mongo_root_password "${{ secrets.MONGO_ROOT_PASSWORD }}"
 
             echo "Deploying the updated stack..."
             sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.prod.yml eisenhower-matrix-app
