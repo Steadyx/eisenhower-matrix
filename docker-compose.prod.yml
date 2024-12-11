@@ -101,11 +101,3 @@ services:
         condition: on-failure
     environment:
       MONGO_INITDB_DATABASE: eisenhower_prod
-    # Remove secrets as they are no longer needed
-    # secrets:
-    #   - mongo_root_user
-    #   - mongo_root_password
-    # Remove entrypoint override if present
-    entrypoint: >
-      sh -c "exec docker-entrypoint.sh mongod"
-
