@@ -114,8 +114,8 @@ jobs:
             }
 
             create_secret jwt_secret "${{ secrets.JWT_SECRET }}"
-            create_secret db_password "${{ secrets.CF_API_KEY }}"
-            create_secret db_user "${{ secrets.CF_API_EMAIL }}"
+            create_secret cf_api_key "${{ secrets.CF_API_KEY }}"
+            create_secret cf_api_email "${{ secrets.CF_API_EMAIL }}"
 
             echo "Deploying the updated stack..."
             sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.prod.yml eisenhower-matrix-app
