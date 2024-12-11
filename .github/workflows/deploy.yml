@@ -76,8 +76,8 @@ jobs:
               git reset --hard origin/"$BRANCH"
             fi
 
-            echo "Ensuring acme.json exists with correct permissions..."
-            ACME_FILE="$PROJECT_DIR/traefik/acme-planit.json"
+            echo "Ensuring acme-planit.json exists with correct permissions..."
+            ACME_FILE="$PROJECT_DIR/acme-planit.json"
             if [ ! -f "$ACME_FILE" ]; then
               echo "Creating acme.json file for Let's Encrypt."
               sudo touch "$ACME_FILE"
@@ -114,10 +114,8 @@ jobs:
             }
 
             create_secret jwt_secret "${{ secrets.JWT_SECRET }}"
-            create_secret mongo_root_user "${{ secrets.MONGO_ROOT_USER }}"
-            create_secret mongo_root_password "${{ secrets.MONGO_ROOT_PASSWORD }}"
 
             echo "Deploying the updated stack..."
-            sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.prod.yml eisenhower-matrix-app
+            sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.yml eisenhower-matrix-app
 
             echo "Deployment completed successfully."

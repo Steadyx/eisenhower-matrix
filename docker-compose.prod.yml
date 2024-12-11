@@ -10,11 +10,7 @@ volumes:
 secrets:
   jwt_secret:
     external: true
-  # Remove these as they're no longer needed
-  # mongo_root_user:
-  #   external: true
-  # mongo_root_password:
-  #   external: true
+  # Removed mongo_root_user and mongo_root_password as they are no longer needed
 
 services:
   traefik-sub:
@@ -79,18 +75,16 @@ services:
     environment:
       NODE_ENV: production
       JWT_SECRET: /run/secrets/jwt_secret
-      MONGO_HOST: mongo  # Ensure this points to 'mongo'
-      MONGO_PORT: 27017  # Optional: Set if different
-      MONGO_DATABASE: eisenhower_prod  # Optional: If used in backend code
+      MONGO_HOST: mongo
+      MONGO_PORT: 27017
+      MONGO_DATABASE: eisenhower_prod
     secrets:
       - jwt_secret
-      # Remove these as they're no longer needed
-      # - mongo_root_user
-      # - mongo_root_password
+    depends_on:
+      - mongo
 
   mongo:
     image: mongo:latest
-    # Remove container_name to allow Swarm to manage it
     volumes:
       - mongo-data:/data/db
     networks:
