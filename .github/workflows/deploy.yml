@@ -89,11 +89,11 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/planit-backend:latest
 
             echo "Stopping existing Docker stack..."
-            sudo docker stack rm planit || echo "Stack planit does not exist."
+            sudo docker stack rm eisenhower-matrix-app || echo "Stack eisenhower-matrix-app does not exist."
 
             echo "Waiting for stack removal..."
-            while sudo docker stack ls | grep -q planit; do
-              echo "Waiting for stack planit to be removed..."
+            while sudo docker stack ls | grep -q eisenhower-matrix-app; do
+              echo "Waiting for stack eisenhower-matrix-app to be removed..."
               sleep 5
             done
 
