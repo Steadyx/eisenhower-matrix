@@ -41,7 +41,7 @@ services:
     secrets:
       - cf_api_key
     environment:
-      CF_DNS_API_TOKEN: /run/secrets/CF_API_KEY
+      CF_DNS_API_TOKEN: /run/secrets/cf_api_key
     networks:
       - app-network
     deploy:
