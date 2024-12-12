@@ -91,18 +91,11 @@ jobs:
             echo "Stopping existing Docker stack..."
             sudo docker stack rm eisenhower-matrix-app || echo "Stack eisenhower-matrix-app does not exist."
 
-            echo "Waiting for stack and network removal..."
-            while sudo docker stack ls | grep -q eisenhower-matrix-app || sudo docker network ls | grep -q eisenhower-matrix-app_app-network; do
-              echo "Waiting for stack or network to be removed..."
+            echo "Waiting for stack removal..."
+            while sudo docker stack ls | grep -q eisenhower-matrix-app; do
+              echo "Waiting for stack to be removed..."
               sleep 5
             done
-
-            if ! sudo docker network ls | grep -q eisenhower-matrix-app_app-network; then
-              echo "Creating overlay network..."
-              sudo docker network create --driver overlay eisenhower-matrix-app_app-network
-            else
-              echo "Overlay network already exists."
-            fi
 
             echo "Pruning Docker system to remove unused data..."
             sudo docker system prune -f --volumes
