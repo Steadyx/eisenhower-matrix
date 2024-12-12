@@ -122,8 +122,6 @@ jobs:
             }
 
             recreate_secret jwt_secret "${{ secrets.JWT_SECRET }}"
-            recreate_secret cf_api_key "${{ secrets.CF_API_KEY }}"
-            recreate_secret cf_api_email "${{ secrets.CF_API_EMAIL }}"
 
             echo "Deploying the updated stack..."
             retry_count=0
