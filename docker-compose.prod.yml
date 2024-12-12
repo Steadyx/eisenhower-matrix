@@ -3,6 +3,9 @@ version: '3.8'
 networks:
   app-network:
     driver: overlay
+    # Optionally, add labels or other configurations if needed
+  test-app_default:  # Reference to the external Traefik network
+    external: true
 
 volumes:
   mongo-data:
@@ -10,77 +13,49 @@ volumes:
 secrets:
   jwt_secret:
     external: true
-  cf_api_key:
-    external: true
-  cf_api_email:
-    external: true
 
 services:
-  traefik-sub:
-    image: traefik:v2.10
-    command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=app-network"
-      - "--entrypoints.web.address=:8080"
-      - "--entrypoints.websecure.address=:8443"
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
-      - "--certificatesresolvers.le.acme.email=edwardlanekemp@gmail.com"
-      - "--certificatesresolvers.le.acme.storage=/acme-planit.json"
-      - "--certificatesresolvers.le.acme.dnsChallenge.provider=cloudflare"
-      - "--certificatesresolvers.le.acme.dnsChallenge.resolvers=1.1.1.1:53"
-      - "--api.insecure=false"
-    ports:
-      - "8080:8080"
-      - "8443:8443"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./acme-planit.json:/acme-planit.json"
-    secrets:
-      - cf_api_key
-    environment:
-      CF_DNS_API_TOKEN: /run/secrets/cf_api_key
-    networks:
-      - app-network
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-
   planit-frontend:
     image: edwardkemp/planit-frontend:latest
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.planit-frontend.rule=Host(`planit.edward-codes.com`)"
-      - "traefik.http.routers.planit-frontend.entrypoints=websecure"
-      - "traefik.http.routers.planit-frontend.tls.certresolver=le"
-      - "traefik.http.services.planit-frontend.loadbalancer.server.port=5173"
     networks:
+      - test-app_default
       - app-network
-
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
+      labels:
+        - "traefik.enable=true"
+
+        # Router for Non-WWW Domain
+        - "traefik.http.routers.planit-frontend.rule=Host(`planit.edward-codes.com`)"
+        - "traefik.http.routers.planit-frontend.entrypoints=websecure"
+        - "traefik.http.routers.planit-frontend.tls.certresolver=le"
+        - "traefik.http.services.planit-frontend.loadbalancer.server.port=5173"
+
+        # Middleware for Frontend (if any additional middlewares are needed, add here)
     environment:
       VITE_API_URL: "https://planit.edward-codes.com/api"
 
   planit-backend:
     image: edwardkemp/planit-backend:latest
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.planit-backend.rule=Host(`planit.edward-codes.com`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.planit-backend.entrypoints=websecure"
-      - "traefik.http.routers.planit-backend.tls.certresolver=le"
-      - "traefik.http.services.planit-backend.loadbalancer.server.port=4000"
     networks:
+      - test-app_default
       - app-network
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
+      labels:
+        - "traefik.enable=true"
+
+        # Router for Backend API
+        - "traefik.http.routers.planit-backend.rule=Host(`planit.edward-codes.com`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.planit-backend.entrypoints=websecure"
+        - "traefik.http.routers.planit-backend.tls.certresolver=le"
+        - "traefik.http.services.planit-backend.loadbalancer.server.port=4000"
+
+        # Optional: Middleware for Backend (e.g., rate limiting, authentication)
     environment:
       NODE_ENV: production
       JWT_SECRET: /run/secrets/jwt_secret
@@ -91,22 +66,16 @@ services:
       - jwt_secret
     depends_on:
       - mongo
-        
 
   mongo:
     image: mongo:latest
+    networks:
+      - app-network 
     volumes:
       - mongo-data:/data/db
-    networks:
-      - app-network
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
     environment:
       MONGO_INITDB_DATABASE: eisenhower_prod
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
