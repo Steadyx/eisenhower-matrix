@@ -1,10 +1,8 @@
 import axios from "axios";
-const enviornment = process.env.NODE_ENV || 'development';
-
-const isProduction = enviornment === 'production';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 const axiosInstance = (token: string | null) => axios.create({
-  baseURL: isProduction ? 'https://eisenhower.edward-codes.com/api' : 'http://localhost:4000',
+  baseURL: API_URL,
   headers: {
     Authorization: token ? `Bearer ${token}` : undefined,
     "Content-Type": "application/json",

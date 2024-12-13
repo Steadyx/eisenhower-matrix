@@ -11,34 +11,6 @@ secrets:
     external: true
 
 services:
-  frontend-main:
-    image: edwardkemp/frontend:latest
-    networks:
-      - test-app_default
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      labels:
-        - "traefik.enable=true"
-
-        # Router for Non-WWW Domain
-        - "traefik.http.routers.frontend.rule=Host(`edward-codes.com`)"
-        - "traefik.http.routers.frontend.entrypoints=websecure"
-        - "traefik.http.routers.frontend.tls.certresolver=le"
-        - "traefik.http.services.frontend.loadbalancer.server.port=80"
-
-        # Router for WWW Domain with Redirect Middleware
-        - "traefik.http.routers.frontend-www.rule=Host(`www.edward-codes.com`)"
-        - "traefik.http.routers.frontend-www.entrypoints=websecure"
-        - "traefik.http.routers.frontend-www.tls.certresolver=le"
-        - "traefik.http.routers.frontend-www.middlewares=redirect-www"
-
-        # Middleware to Redirect WWW to Non-WWW
-        - "traefik.http.middlewares.redirect-www.redirectregex.regex=^https?://www\\.(.*)"
-        - "traefik.http.middlewares.redirect-www.redirectregex.replacement=https://$${1}"
-        - "traefik.http.middlewares.redirect-www.redirectregex.permanent=true"
-
   planit-frontend:
     image: edwardkemp/planit-frontend:latest
     networks:
@@ -69,6 +41,7 @@ services:
         - "traefik.http.routers.redirect-www-planit.service=planit-frontend"
 
     environment:
+      VITE_NODE_ENV: production
       VITE_API_URL: "https://planit.edward-codes.com/api"
 
   planit-backend:
