@@ -28,7 +28,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 if (isProduction) {
-  mongoUri = `mongodb://planit.edward-codes.com:27017/eisenhower_prod`;
+  mongoUri = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DATABASE}`;
 } else {
   mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/eisenhower_dev'
 }
