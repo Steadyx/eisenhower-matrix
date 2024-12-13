@@ -5,6 +5,8 @@ networks:
     external: true
 
 secrets:
+  jwt_secret:
+    external: true
   cf_api_key:
     external: true
 
