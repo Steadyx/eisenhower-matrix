@@ -119,8 +119,6 @@ jobs:
             echo "Pulling latest Docker images..."
             if [ -z "${DOCKER_USERNAME:-}" ]; then
               echo "Warning: \$DOCKER_USERNAME is not set. Unable to pull from private repos."
-              # Either exit or skip pulling from private repos
-              # exit 1
             else
               sudo docker pull "${DOCKER_USERNAME}/planit-frontend:latest" || true
               sudo docker pull "${DOCKER_USERNAME}/planit-backend:latest" || true
@@ -175,14 +173,31 @@ jobs:
             fi
 
             ##############################################################################
-            # Ensure Overlay Network (Conditionally Create If Missing)
+            # Ensure Network Exists and is Properly Configured
             ##############################################################################
-            if sudo docker network inspect "${EXTERNAL_NETWORK}" > /dev/null 2>&1; then
-              echo "Network ${EXTERNAL_NETWORK} already exists. Skipping creation."
-            else
-              echo "Creating Docker overlay network: ${EXTERNAL_NETWORK}"
-              sudo docker network create --driver overlay --attachable "${EXTERNAL_NETWORK}"
-            fi
+            ensure_network() {
+              local network_name="$1"
+              
+              # Check if network exists
+              if ! sudo docker network inspect "${network_name}" >/dev/null 2>&1; then
+                echo "Creating Docker overlay network: ${network_name}"
+                sudo docker network create --driver overlay --attachable "${network_name}"
+              else
+                # Network exists - ensure it's an overlay network
+                network_driver=$(sudo docker network inspect "${network_name}" -f '{{.Driver}}')
+                if [ "${network_driver}" != "overlay" ]; then
+                  echo "Warning: ${network_name} exists but is not an overlay network."
+                  echo "Removing existing network and recreating as overlay..."
+                  sudo docker network rm "${network_name}"
+                  sudo docker network create --driver overlay --attachable "${network_name}"
+                else
+                  echo "Network ${network_name} already exists and is properly configured."
+                fi
+              fi
+            }
+
+            # Ensure network exists before deployment
+            ensure_network "${EXTERNAL_NETWORK}"
 
             ##############################################################################
             # Deploy Stack with Retry
@@ -193,12 +208,24 @@ jobs:
               retry_count=$((retry_count + 1))
               echo "Attempting to deploy Docker stack (Attempt ${retry_count})..."
 
-              # Docker stack deploy
+              # Check if docker-compose.prod.yml exists
+              if [ ! -f "${PROJECT_DIR}/docker-compose.prod.yml" ]; then
+                echo "Error: docker-compose.prod.yml not found in ${PROJECT_DIR}"
+                exit 1
+              fi
+
+              # Docker stack deploy with network configuration check
               if sudo docker stack deploy -c "${PROJECT_DIR}/docker-compose.prod.yml" "${STACK_NAME}"; then
                 echo "Deployment completed successfully."
                 break
               else
                 echo "Deployment failed on attempt ${retry_count}."
+                
+                # Additional error checking
+                if sudo docker stack ps "${STACK_NAME}" 2>/dev/null; then
+                  echo "Checking stack services status..."
+                  sudo docker service ls --filter "name=${STACK_NAME}"
+                fi
               fi
 
               if [ "${retry_count}" -ge "${MAX_RETRIES}" ]; then
