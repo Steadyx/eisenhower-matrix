@@ -6,9 +6,7 @@ import mongoose from 'mongoose';
 import taskRoutes from '@routes/taskRoutes';
 import authRoutes from '@routes/authRoutes';
 
-// Load environment variables
 dotenv.config();
-
 const app: Application = express();
 const PORT = process.env.PORT || 4000;
 const envionment = process.env.NODE_ENV || 'development';
@@ -20,7 +18,6 @@ if (!isProduction) {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
   }
-
   app.use(cors(corsOptions));
 }
 
@@ -40,18 +37,23 @@ mongoose
   .then(() => console.log('Connected to MongoDB!'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// Routes
-app.get('/', (_req: Request, res: Response) => {
-  res.send('Welcome to the Eisenhower Matrix API');
-});
+// Create an API router
+const apiRouter = express.Router();
 
-app.use('/auth', authRoutes);
-app.use('/tasks', taskRoutes);
+// Add routes to API router
+apiRouter.get('/', (_req: Request, res: Response) => {
+  res.send('Welcome to the Eisenhower Matrix API');
+})
+
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/tasks', taskRoutes);
+
+// Mount the API router with /api prefix
+app.use('/api', apiRouter);
 
 // Error Handling Middleware
 app.use(errorHandler);
 
-// Start the Server
 app.listen(PORT, () => {
   console.log(`Server running on port: ${PORT}`);
   console.log(`Environment currently at: ${envionment}`);
