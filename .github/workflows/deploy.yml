@@ -56,44 +56,79 @@ jobs:
             set -euo pipefail
             IFS=$'\n\t'
 
+            ##############################################################################
             # Variables
+            ##############################################################################
             PROJECT_DIR="/home/edwardkemp/websites/eisenhower-matrix-app"
             REPO_URL="git@github.com:Steadyx/eisenhower-matrix.git"
             BRANCH="main"
             STACK_NAME="eisenhower-matrix-app"
             EXTERNAL_NETWORK="test-app_default"
 
-            # Navigate to project directory
+            # Adjust these if needed
+            MAX_RETRIES=5
+            RETRY_SLEEP=10  # seconds
+
+            ##############################################################################
+            # Ensure Docker is available
+            ##############################################################################
+            if ! command -v docker &> /dev/null; then
+              echo "Error: Docker is not installed or not in PATH."
+              exit 1
+            fi
+
+            ##############################################################################
+            # Check if we're in a Docker Swarm
+            ##############################################################################
+            if ! docker info 2>/dev/null | grep -q "Swarm: active"; then
+              echo "Error: Docker Swarm is not initialized on this machine."
+              echo "Run 'docker swarm init' on this machine before running this script."
+              exit 1
+            fi
+
+            ##############################################################################
+            # Clone or Update Project
+            ##############################################################################
             if [ ! -d "$PROJECT_DIR" ]; then
               echo "Project directory does not exist. Cloning repository..."
               git clone "$REPO_URL" "$PROJECT_DIR"
+              cd "$PROJECT_DIR"
             else
               echo "Project directory exists. Pulling latest changes..."
               cd "$PROJECT_DIR"
-
-              echo "Fetching latest changes..."
               git fetch origin
-
-              echo "Resetting local changes..."
+              echo "Resetting local changes to origin/$BRANCH..."
               git reset --hard origin/"$BRANCH"
             fi
 
+            ##############################################################################
             # Ensure acme-planit.json exists with correct permissions
+            ##############################################################################
             ACME_FILE="$PROJECT_DIR/acme-planit.json"
             if [ ! -f "$ACME_FILE" ]; then
-              echo "Creating acme-planit.json file for Let's Encrypt."
+              echo "Creating acme-planit.json for Let's Encrypt..."
               sudo touch "$ACME_FILE"
             fi
             sudo chmod 600 "$ACME_FILE"
             echo "acme-planit.json is present with correct permissions."
 
-            # Pull latest Docker images
+            ##############################################################################
+            # Pull Latest Docker Images
+            ##############################################################################
             echo "Pulling latest Docker images..."
-            sudo docker pull "${{ secrets.DOCKER_USERNAME }}/planit-frontend:latest"
-            sudo docker pull "${{ secrets.DOCKER_USERNAME }}/planit-backend:latest"
-            echo "Docker images pulled successfully."
+            if [ -z "${DOCKER_USERNAME:-}" ]; then
+              echo "Warning: \$DOCKER_USERNAME is not set. Unable to pull from private repo."
+              # If DOCKER_USERNAME is not set, either fail here or skip pulling
+              # exit 1
+            else
+              sudo docker pull "${DOCKER_USERNAME}/planit-frontend:latest" || true
+              sudo docker pull "${DOCKER_USERNAME}/planit-backend:latest" || true
+            fi
+            echo "Docker images pulled (or attempted to pull) successfully."
 
-            # Stop existing Docker stack
+            ##############################################################################
+            # Stop and Remove Existing Stack
+            ##############################################################################
             if sudo docker stack ls | awk '{print $1}' | grep -q "^${STACK_NAME}$"; then
               echo "Stopping existing Docker stack: ${STACK_NAME}..."
               sudo docker stack rm "${STACK_NAME}"
@@ -108,16 +143,22 @@ jobs:
               echo "Stack ${STACK_NAME} does not exist. No action needed."
             fi
 
-            # Prune Docker system (Optional: Be cautious with this in production)
+            ##############################################################################
+            # Prune Docker System (Optional)
+            # USE WITH CAUTION IN PRODUCTION.
+            ##############################################################################
             echo "Pruning Docker system to remove unused data..."
             sudo docker system prune -f --volumes
             echo "Docker system pruned successfully."
 
-            # Remove and recreate Docker secrets
+            ##############################################################################
+            # Manage Docker Secrets
+            ##############################################################################
             recreate_secret() {
               local secret_name="$1"
               local secret_value="$2"
 
+              # Remove existing secret if present
               if sudo docker secret ls --format '{{.Name}}' | grep -q "^${secret_name}$"; then
                 echo "Removing existing secret: ${secret_name}"
                 sudo docker secret rm "${secret_name}"
@@ -127,27 +168,47 @@ jobs:
               echo "${secret_value}" | sudo docker secret create "${secret_name}" -
             }
 
-            recreate_secret jwt_secret "${{ secrets.JWT_SECRET }}"
-            echo "Docker secrets recreated successfully."
+            if [ -z "${JWT_SECRET:-}" ]; then
+              echo "Warning: \$JWT_SECRET is not set. Secret 'jwt_secret' not created."
+            else
+              recreate_secret "jwt_secret" "${JWT_SECRET}"
+            fi
 
-            # Deploy updated stack with retries
+            ##############################################################################
+            # Ensure Overlay Network (Conditionally Create If Missing)
+            ##############################################################################
+            if sudo docker network inspect "${EXTERNAL_NETWORK}" > /dev/null 2>&1; then
+              echo "Network ${EXTERNAL_NETWORK} already exists. Skipping creation."
+            else
+              echo "Creating Docker overlay network: ${EXTERNAL_NETWORK}"
+              # Overlay networks are used in Docker Swarm mode
+              sudo docker network create --driver overlay --attachable "${EXTERNAL_NETWORK}"
+            fi
+
+            ##############################################################################
+            # Deploy Stack with Retry
+            ##############################################################################
             retry_count=0
-            max_retries=5
-            sleep_duration=10  # seconds
 
             while true; do
-              echo "Attempting to deploy Docker stack (Attempt $((retry_count + 1)))..."
+              retry_count=$((retry_count + 1))
+              echo "Attempting to deploy Docker stack (Attempt ${retry_count})..."
+              
+              # Docker stack deploy
               if sudo docker stack deploy -c "${PROJECT_DIR}/docker-compose.prod.yml" "${STACK_NAME}"; then
                 echo "Deployment completed successfully."
                 break
+              else
+                echo "Deployment failed on attempt ${retry_count}."
               fi
 
-              retry_count=$((retry_count + 1))
-              if [ "${retry_count}" -ge "${max_retries}" ]; then
-                echo "Failed to deploy stack after ${max_retries} attempts."
+              if [ "${retry_count}" -ge "${MAX_RETRIES}" ]; then
+                echo "Failed to deploy stack after ${MAX_RETRIES} attempts."
                 exit 1
               fi
 
-              echo "Retrying stack deployment... Attempt ${retry_count}"
-              sleep "${sleep_duration}"
+              echo "Retrying stack deployment in ${RETRY_SLEEP} seconds..."
+              sleep "${RETRY_SLEEP}"
             done
+
+            echo "All done! Your stack is up and running."
