@@ -61,7 +61,7 @@ jobs:
             REPO_URL="git@github.com:Steadyx/eisenhower-matrix.git"
             BRANCH="main"
 
-            echo "Navigating to project directory..."
+            # Navigate to project directory
             if [ ! -d "$PROJECT_DIR" ]; then
               echo "Project directory does not exist. Cloning repository..."
               git clone "$REPO_URL" "$PROJECT_DIR"
@@ -76,31 +76,37 @@ jobs:
               git reset --hard origin/"$BRANCH"
             fi
 
-            echo "Ensuring acme-planit.json exists with correct permissions..."
+            # Ensure acme-planit.json exists with correct permissions
             ACME_FILE="$PROJECT_DIR/acme-planit.json"
             if [ ! -f "$ACME_FILE" ]; then
-              echo "Creating acme.json file for Let's Encrypt."
+              echo "Creating acme-planit.json file for Let's Encrypt."
               sudo touch "$ACME_FILE"
             fi
             sudo chmod 600 "$ACME_FILE"
 
-            echo "Pulling latest Docker images..."
+            # Pull latest Docker images
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/planit-frontend:latest
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/planit-backend:latest
 
-            echo "Stopping existing Docker stack..."
-            sudo docker stack rm eisenhower-matrix-app || echo "Stack eisenhower-matrix-app does not exist."
+            # Stop existing Docker stack
+            if sudo docker stack ls | grep -q eisenhower-matrix-app; then
+              echo "Stopping existing Docker stack..."
+              sudo docker stack rm eisenhower-matrix-app
 
-            echo "Waiting for stack removal..."
-            while sudo docker stack ls | grep -q eisenhower-matrix-app; do
-              echo "Waiting for stack to be removed..."
-              sleep 5
-            done
+              echo "Waiting for stack removal..."
+              while sudo docker stack ls | grep -q eisenhower-matrix-app; do
+                echo "Waiting for stack to be removed..."
+                sleep 5
+              done
+            else
+              echo "Stack eisenhower-matrix-app does not exist."
+            fi
 
+            # Prune Docker system
             echo "Pruning Docker system to remove unused data..."
             sudo docker system prune -f --volumes
 
-            echo "Removing and recreating Docker secrets..."
+            # Remove and recreate Docker secrets
             recreate_secret() {
               local secret_name="$1"
               local secret_value="$2"
@@ -116,18 +122,21 @@ jobs:
 
             recreate_secret jwt_secret "${{ secrets.JWT_SECRET }}"
 
-            echo "Deploying the updated stack..."
+            # Deploy updated stack with retries
             retry_count=0
             max_retries=3
-            until sudo docker stack deploy -c /home/edwardkemp/websites/eisenhower-matrix-app/docker-compose.prod.yml eisenhower-matrix-app || [ $retry_count -eq $max_retries ]; do
-              echo "Retrying stack deployment... Attempt $((retry_count+1))"
+            while true; do
+              if sudo docker stack deploy -c "$PROJECT_DIR/docker-compose.prod.yml" eisenhower-matrix-app; then
+                echo "Deployment completed successfully."
+                break
+              fi
+
               retry_count=$((retry_count+1))
+              if [ $retry_count -ge $max_retries ]; then
+                echo "Failed to deploy stack after $max_retries attempts."
+                exit 1
+              fi
+
+              echo "Retrying stack deployment... Attempt $retry_count"
               sleep 5
             done
-
-            if [ $retry_count -eq $max_retries ]; then
-              echo "Failed to deploy stack after $max_retries attempts."
-              exit 1
-            fi
-
-            echo "Deployment completed successfully."
