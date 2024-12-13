@@ -19,6 +19,9 @@ import {
   clearAllTasksRequest,
   clearAllTasksSuccess,
   clearAllTasksFailure,
+  toggleSelectedTasksRequest,
+  toggleSelectedTasksSuccess,
+  toggleSelectedTasksFailure,
 } from "@redux/slices/taskSlice";
 import { RootState } from "@redux/store";
 import { SagaIterator } from "redux-saga";
@@ -108,6 +111,42 @@ function* handleClearAllTasks(): SagaIterator {
     }
 
     yield put(clearAllTasksFailure(errorMessage));
+  }
+}
+
+function* handleToggleSelectedTasks(): SagaIterator {
+  try {
+    const token: string | null = yield select((state: RootState) => state.auth.token);
+    const tasks: TaskResponse[] = yield select((state: RootState) => state.tasks.tasks);
+    const activeTasks: string[] = yield select((state: RootState) => state.tasks.activeTasks);
+
+    if (!token) {
+      throw new Error("Authentication token is missing.");
+    }
+
+    const selectedTasks = tasks.filter(task => activeTasks.includes(task._id));
+
+    const updatePromises = selectedTasks.map(task => {
+      const updates = { completed: !task.completed };
+      return call(updateTaskApi, task._id, updates, token);
+    });
+
+    const results: AxiosResponse<TaskResponse>[] = yield all(updatePromises);
+    const updatedTasks = results.map(response => response.data);
+
+    yield put(toggleSelectedTasksSuccess(updatedTasks));
+  } catch (error: unknown) {
+    let errorMessage: string;
+
+    if (axios.isAxiosError(error)) {
+      errorMessage = error.response?.data?.error || "Failed to toggle selected tasks.";
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = "Failed to toggle selected tasks.";
+    }
+
+    yield put(toggleSelectedTasksFailure(errorMessage));
   }
 }
 
@@ -254,6 +293,10 @@ function* watchClearAllTasks(): SagaIterator {
   yield takeLatest(clearAllTasksRequest.type, handleClearAllTasks);
 }
 
+function* watchToggleSelectedTasks(): SagaIterator {
+  yield takeLatest(toggleSelectedTasksRequest.type, handleToggleSelectedTasks);
+}
+
 export default function* taskSagas(): SagaIterator {
   yield all([
     fork(watchFetchTasks),
@@ -261,6 +304,7 @@ export default function* taskSagas(): SagaIterator {
     fork(watchUpdateTask),
     fork(watchDeleteTask),
     fork(watchDeleteActiveTasks),
+    fork(watchToggleSelectedTasks),
     fork(watchDeleteTasksFromQuadrant),
     fork(watchClearAllTasks),
   ]);
