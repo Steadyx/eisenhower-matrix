@@ -61,7 +61,7 @@ jobs:
             REPO_URL="git@github.com:Steadyx/eisenhower-matrix.git"
             BRANCH="main"
             STACK_NAME="eisenhower-matrix-app"
-            NETWORK_NAME="${STACK_NAME}_default"
+            EXTERNAL_NETWORK="test-app_default"
 
             # Navigate to project directory
             if [ ! -d "$PROJECT_DIR" ]; then
@@ -85,43 +85,33 @@ jobs:
               sudo touch "$ACME_FILE"
             fi
             sudo chmod 600 "$ACME_FILE"
+            echo "acme-planit.json is present with correct permissions."
 
             # Pull latest Docker images
             echo "Pulling latest Docker images..."
             sudo docker pull "${{ secrets.DOCKER_USERNAME }}/planit-frontend:latest"
             sudo docker pull "${{ secrets.DOCKER_USERNAME }}/planit-backend:latest"
+            echo "Docker images pulled successfully."
 
             # Stop existing Docker stack
-            if sudo docker stack ls | grep -q "^${STACK_NAME}$"; then
-              echo "Stopping existing Docker stack..."
+            if sudo docker stack ls | awk '{print $1}' | grep -q "^${STACK_NAME}$"; then
+              echo "Stopping existing Docker stack: ${STACK_NAME}..."
               sudo docker stack rm "${STACK_NAME}"
 
               echo "Waiting for stack removal..."
-              while sudo docker stack ls | grep -q "^${STACK_NAME}$"; do
-                echo "Waiting for stack to be removed..."
+              while sudo docker stack ls | awk '{print $1}' | grep -q "^${STACK_NAME}$"; do
+                echo "Waiting for stack ${STACK_NAME} to be removed..."
                 sleep 5
               done
+              echo "Stack ${STACK_NAME} removed successfully."
             else
-              echo "Stack ${STACK_NAME} does not exist."
+              echo "Stack ${STACK_NAME} does not exist. No action needed."
             fi
 
-            # Remove existing network if it exists
-            if sudo docker network ls --format '{{.Name}}' | grep -q "^${NETWORK_NAME}$"; then
-              echo "Removing existing network: ${NETWORK_NAME}"
-              sudo docker network rm "${NETWORK_NAME}"
-              
-              # Wait until the network is removed
-              while sudo docker network ls --format '{{.Name}}' | grep -q "^${NETWORK_NAME}$"; do
-                echo "Waiting for network ${NETWORK_NAME} to be removed..."
-                sleep 2
-              done
-            else
-              echo "Network ${NETWORK_NAME} does not exist."
-            fi
-
-            # Prune Docker system
+            # Prune Docker system (Optional: Be cautious with this in production)
             echo "Pruning Docker system to remove unused data..."
             sudo docker system prune -f --volumes
+            echo "Docker system pruned successfully."
 
             # Remove and recreate Docker secrets
             recreate_secret() {
@@ -138,10 +128,13 @@ jobs:
             }
 
             recreate_secret jwt_secret "${{ secrets.JWT_SECRET }}"
+            echo "Docker secrets recreated successfully."
 
             # Deploy updated stack with retries
             retry_count=0
-            max_retries=5  # Increased retry attempts
+            max_retries=5
+            sleep_duration=10  # seconds
+
             while true; do
               echo "Attempting to deploy Docker stack (Attempt $((retry_count + 1)))..."
               if sudo docker stack deploy -c "${PROJECT_DIR}/docker-compose.prod.yml" "${STACK_NAME}"; then
@@ -156,5 +149,5 @@ jobs:
               fi
 
               echo "Retrying stack deployment... Attempt ${retry_count}"
-              sleep 10  # Increased sleep time for better stability
+              sleep "${sleep_duration}"
             done
