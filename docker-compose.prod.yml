@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  test-app_default:
+    external: true
+
 secrets:
   cf_api_key:
     external: true
