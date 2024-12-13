@@ -60,6 +60,8 @@ jobs:
             PROJECT_DIR="/home/edwardkemp/websites/eisenhower-matrix-app"
             REPO_URL="git@github.com:Steadyx/eisenhower-matrix.git"
             BRANCH="main"
+            STACK_NAME="eisenhower-matrix-app"
+            NETWORK_NAME="${STACK_NAME}_default"
 
             # Navigate to project directory
             if [ ! -d "$PROJECT_DIR" ]; then
@@ -85,21 +87,36 @@ jobs:
             sudo chmod 600 "$ACME_FILE"
 
             # Pull latest Docker images
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/planit-frontend:latest
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/planit-backend:latest
+            echo "Pulling latest Docker images..."
+            sudo docker pull "${{ secrets.DOCKER_USERNAME }}/planit-frontend:latest"
+            sudo docker pull "${{ secrets.DOCKER_USERNAME }}/planit-backend:latest"
 
             # Stop existing Docker stack
-            if sudo docker stack ls | grep -q eisenhower-matrix-app; then
+            if sudo docker stack ls | grep -q "^${STACK_NAME}$"; then
               echo "Stopping existing Docker stack..."
-              sudo docker stack rm eisenhower-matrix-app
+              sudo docker stack rm "${STACK_NAME}"
 
               echo "Waiting for stack removal..."
-              while sudo docker stack ls | grep -q eisenhower-matrix-app; do
+              while sudo docker stack ls | grep -q "^${STACK_NAME}$"; do
                 echo "Waiting for stack to be removed..."
                 sleep 5
               done
             else
-              echo "Stack eisenhower-matrix-app does not exist."
+              echo "Stack ${STACK_NAME} does not exist."
+            fi
+
+            # Remove existing network if it exists
+            if sudo docker network ls --format '{{.Name}}' | grep -q "^${NETWORK_NAME}$"; then
+              echo "Removing existing network: ${NETWORK_NAME}"
+              sudo docker network rm "${NETWORK_NAME}"
+              
+              # Wait until the network is removed
+              while sudo docker network ls --format '{{.Name}}' | grep -q "^${NETWORK_NAME}$"; do
+                echo "Waiting for network ${NETWORK_NAME} to be removed..."
+                sleep 2
+              done
+            else
+              echo "Network ${NETWORK_NAME} does not exist."
             fi
 
             # Prune Docker system
@@ -111,32 +128,33 @@ jobs:
               local secret_name="$1"
               local secret_value="$2"
 
-              if sudo docker secret ls --format '{{.Name}}' | grep -q "^$secret_name$"; then
-                echo "Removing existing secret: $secret_name"
-                sudo docker secret rm "$secret_name"
+              if sudo docker secret ls --format '{{.Name}}' | grep -q "^${secret_name}$"; then
+                echo "Removing existing secret: ${secret_name}"
+                sudo docker secret rm "${secret_name}"
               fi
 
-              echo "Creating secret: $secret_name"
-              echo "$secret_value" | sudo docker secret create "$secret_name" -
+              echo "Creating secret: ${secret_name}"
+              echo "${secret_value}" | sudo docker secret create "${secret_name}" -
             }
 
             recreate_secret jwt_secret "${{ secrets.JWT_SECRET }}"
 
             # Deploy updated stack with retries
             retry_count=0
-            max_retries=3
+            max_retries=5  # Increased retry attempts
             while true; do
-              if sudo docker stack deploy -c "$PROJECT_DIR/docker-compose.prod.yml" eisenhower-matrix-app; then
+              echo "Attempting to deploy Docker stack (Attempt $((retry_count + 1)))..."
+              if sudo docker stack deploy -c "${PROJECT_DIR}/docker-compose.prod.yml" "${STACK_NAME}"; then
                 echo "Deployment completed successfully."
                 break
               fi
 
-              retry_count=$((retry_count+1))
-              if [ $retry_count -ge $max_retries ]; then
-                echo "Failed to deploy stack after $max_retries attempts."
+              retry_count=$((retry_count + 1))
+              if [ "${retry_count}" -ge "${max_retries}" ]; then
+                echo "Failed to deploy stack after ${max_retries} attempts."
                 exit 1
               fi
 
-              echo "Retrying stack deployment... Attempt $retry_count"
-              sleep 5
+              echo "Retrying stack deployment... Attempt ${retry_count}"
+              sleep 10  # Increased sleep time for better stability
             done
