@@ -9,7 +9,6 @@ import authRoutes from '@routes/authRoutes';
 // Load environment variables
 dotenv.config();
 
-// Initialize Express app
 const app: Application = express();
 const PORT = process.env.PORT || 4000;
 const envionment = process.env.NODE_ENV || 'development';
@@ -29,7 +28,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 if (isProduction) {
-  mongoUri = `mongodb://mongo:27017/eisenhower_prod`;
+  mongoUri = `mongodb://planit.edward-codes.com:27017/eisenhower_prod`;
 } else {
   mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/eisenhower_dev'
 }
@@ -54,6 +53,6 @@ app.use(errorHandler);
 
 // Start the Server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port: ${PORT}`);
   console.log(`Environment currently at: ${envionment}`);
 });

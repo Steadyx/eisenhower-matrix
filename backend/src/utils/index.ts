@@ -36,7 +36,7 @@ export const generateUsername = (id: string): string => {
   if (id.length < 8) {
     throw new Error('ID is too short to generate a username.');
   }
-  return `user_${id.slice(0, 8)}`; // Example: user_a1b2c3d4
+  return `user_${id.slice(0, 8)}`;
 };
 
 /**
@@ -45,7 +45,7 @@ export const generateUsername = (id: string): string => {
  * @returns {Promise<string>} The hashed ID.
  */
 export const hashID = async (id: string): Promise<string> => {
-  const saltRounds = 12; // Adjust salt rounds as needed (higher is more secure but slower)
+  const saltRounds = 12;
   try {
     const salt = await bcrypt.genSalt(saltRounds);
     const hashed = await bcrypt.hash(id, salt);

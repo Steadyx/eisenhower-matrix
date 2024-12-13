@@ -26,12 +26,26 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
-
         # Router for Non-WWW Domain
         - "traefik.http.routers.planit-frontend.rule=Host(`planit.edward-codes.com`)"
         - "traefik.http.routers.planit-frontend.entrypoints=websecure"
         - "traefik.http.routers.planit-frontend.tls.certresolver=le"
         - "traefik.http.services.planit-frontend.loadbalancer.server.port=5173"
+
+        # Middleware for Redirecting WWW to Non-WWW
+        - "traefik.http.middlewares.redirect-www-planit.redirectregex.regex=^https?://www\\.planit\\.edward-codes\\.com/(.*)"
+        - "traefik.http.middlewares.redirect-www-planit.redirectregex.replacement=https://planit.edward-codes.com/$${1}"
+        - "traefik.http.middlewares.redirect-www-planit.redirectregex.permanent=true"
+
+        # Router for WWW Domain
+        - "traefik.http.routers.redirect-www-planit.rule=Host(`www.planit.edward-codes.com`)"
+        - "traefik.http.routers.redirect-www-planit.entrypoints=websecure"
+        - "traefik.http.routers.redirect-www-planit.middlewares=redirect-www-planit"
+        - "traefik.http.routers.redirect-www-planit.tls.certresolver=le"
+        - "traefik.http.routers.redirect-www-planit.service=redirect-service"
+
+        # Dummy Service for Redirect
+        - "traefik.http.services.redirect-service.loadbalancer.server.port=80"
 
     environment:
       VITE_API_URL: "https://planit.edward-codes.com/api"
@@ -68,7 +82,7 @@ services:
   mongo:
     image: mongo:latest
     networks:
-      - app-network  # Only internal communication
+      - app-network
     volumes:
       - mongo-data:/data/db
     deploy:
@@ -77,15 +91,3 @@ services:
         condition: on-failure
     environment:
       MONGO_INITDB_DATABASE: eisenhower_prod
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-networks:
-  app-network:
-    driver: overlay
-    internal: true
-  test-app_default:
-    external: true
