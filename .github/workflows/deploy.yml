@@ -64,13 +64,11 @@ jobs:
             BRANCH="main"
             STACK_NAME="eisenhower-matrix-app"
             EXTERNAL_NETWORK="test-app_default"
-
-            # Adjust these if needed
             MAX_RETRIES=5
             RETRY_SLEEP=10  # seconds
 
             ##############################################################################
-            # Ensure Docker is available
+            # Check if Docker is installed
             ##############################################################################
             if ! command -v docker &> /dev/null; then
               echo "Error: Docker is not installed or not in PATH."
@@ -78,13 +76,16 @@ jobs:
             fi
 
             ##############################################################################
-            # Check if we're in a Docker Swarm
+            # Check if Docker Swarm is active using LocalNodeState
             ##############################################################################
-            if ! docker info 2>/dev/null | grep -q "Swarm: active"; then
-              echo "Error: Docker Swarm is not initialized on this machine."
-              echo "Run 'docker swarm init' on this machine before running this script."
+            SWARM_STATE="$(docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null || echo 'unknown')"
+            if [ "$SWARM_STATE" != "active" ]; then
+              echo "Error: Docker Swarm is not initialized or not active on this machine."
+              echo "LocalNodeState: $SWARM_STATE"
+              echo "Run 'docker swarm init' or rejoin the swarm as needed before running this script."
               exit 1
             fi
+            echo "Swarm is active. Proceeding..."
 
             ##############################################################################
             # Clone or Update Project
@@ -117,8 +118,8 @@ jobs:
             ##############################################################################
             echo "Pulling latest Docker images..."
             if [ -z "${DOCKER_USERNAME:-}" ]; then
-              echo "Warning: \$DOCKER_USERNAME is not set. Unable to pull from private repo."
-              # If DOCKER_USERNAME is not set, either fail here or skip pulling
+              echo "Warning: \$DOCKER_USERNAME is not set. Unable to pull from private repos."
+              # Either exit or skip pulling from private repos
               # exit 1
             else
               sudo docker pull "${DOCKER_USERNAME}/planit-frontend:latest" || true
@@ -127,7 +128,7 @@ jobs:
             echo "Docker images pulled (or attempted to pull) successfully."
 
             ##############################################################################
-            # Stop and Remove Existing Stack
+            # Stop and Remove Existing Stack (if any)
             ##############################################################################
             if sudo docker stack ls | awk '{print $1}' | grep -q "^${STACK_NAME}$"; then
               echo "Stopping existing Docker stack: ${STACK_NAME}..."
@@ -144,8 +145,7 @@ jobs:
             fi
 
             ##############################################################################
-            # Prune Docker System (Optional)
-            # USE WITH CAUTION IN PRODUCTION.
+            # Prune Docker System (Optional - USE WITH CAUTION IN PRODUCTION)
             ##############################################################################
             echo "Pruning Docker system to remove unused data..."
             sudo docker system prune -f --volumes
@@ -181,7 +181,6 @@ jobs:
               echo "Network ${EXTERNAL_NETWORK} already exists. Skipping creation."
             else
               echo "Creating Docker overlay network: ${EXTERNAL_NETWORK}"
-              # Overlay networks are used in Docker Swarm mode
               sudo docker network create --driver overlay --attachable "${EXTERNAL_NETWORK}"
             fi
 
@@ -193,7 +192,7 @@ jobs:
             while true; do
               retry_count=$((retry_count + 1))
               echo "Attempting to deploy Docker stack (Attempt ${retry_count})..."
-              
+
               # Docker stack deploy
               if sudo docker stack deploy -c "${PROJECT_DIR}/docker-compose.prod.yml" "${STACK_NAME}"; then
                 echo "Deployment completed successfully."
