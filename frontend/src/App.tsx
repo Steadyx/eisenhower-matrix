@@ -6,7 +6,7 @@ import GlobalContextMenu from "@components/context-menu";
 import { useSelector } from "react-redux";
 import { RootState } from "@redux/store";
 import PrivateRoute from "@components/PrivateRoute";
-import ThemeSwitcher from "@components/ThemeSwitcher"; // Import ThemeSwitcher
+import ThemeSwitcher from "@components/ThemeSwitcher";
 import { useEffect } from "react";
 
 function App() {
